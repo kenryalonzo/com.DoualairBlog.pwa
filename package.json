@@ -1,0 +1,27 @@
+{
+  "name": "doualair_blog",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon api/index.js",
+    "start": "node api/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kenryalonzo/com.DoualairBlog.pwa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kenryalonzo/com.DoualairBlog.pwa/issues"
+  },
+  "homepage": "https://github.com/kenryalonzo/com.DoualairBlog.pwa#readme",
+  "description": "",
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10"
+  }
+}
