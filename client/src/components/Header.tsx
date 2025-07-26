@@ -198,11 +198,12 @@ const Header = () => {
             <Link to="/" className="flex items-center">
               <div className="relative">
                 <motion.img
-                  className="h-10 w-auto z-10 relative"
+                  className="h-12 w-auto z-10 relative drop-shadow-lg"
                   src="/dlair.svg"
                   alt="Doualair Logo"
                   whileHover={{
                     rotate: [0, 10, -10, 5, 0],
+                    scale: 1.1,
                     transition: { duration: 0.8 },
                   }}
                   whileTap={{ scale: 0.95 }}
@@ -213,9 +214,10 @@ const Header = () => {
                 />
               </div>
               <motion.span
-                className="ml-3 text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-400 bg-clip-text text-transparent"
+                className="ml-3 text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-400 bg-clip-text text-transparent drop-shadow-sm"
                 whileHover={{
-                  textShadow: "0 0 10px rgba(96, 165, 250, 0.5)",
+                  textShadow: "0 0 15px rgba(96, 165, 250, 0.7)",
+                  scale: 1.05,
                   transition: { duration: 0.3 },
                 }}
               >

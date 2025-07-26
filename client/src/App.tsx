@@ -7,6 +7,7 @@ import SignUp from './pages/SignUp';
 import DashBoard from './pages/DashBoard';
 import Projects from './pages/Projects';
 import Header from './components/Header';
+import Footer from './components/Footer';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           </Routes>
         </main>
       </div>
+      <Footer />
     </Router>
   );
 }
