@@ -43,3 +43,13 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Quelque chose a mal tourné !' });
 });
+
+app.use((err, req, res, next) => {
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'Quelque chose a mal tourné !';
+    res.status(statusCode).json({ 
+        success: false,
+        statusCode,
+        message
+    });
+});
