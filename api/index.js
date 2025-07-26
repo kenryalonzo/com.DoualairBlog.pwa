@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import userRoute from "./routes/user.route.js";
+import authRoute from "./routes/auth.route.js";
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -35,6 +36,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.use(express.json());
 
 app.use('/api/user', userRoute);
+app.use('/api/auth', authRoute);
 
 // Gestion des erreurs
 app.use((err, req, res, next) => {
