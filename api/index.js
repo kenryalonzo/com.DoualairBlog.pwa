@@ -1,11 +1,45 @@
-import express from 'express'
-import dotenv from 'dotenv'
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+
+// Charger les variables d'environnement
 dotenv.config();
 
+// Vérifier que MONGO_URI est défini
+if (!process.env.MONGO_URI) {
+  console.error('Erreur : MONGO_URI non défini dans le fichier .env');
+  process.exit(1);
+}
 
-
+// Initialiser l'application Express
 const app = express();
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log('Server is running on port 3000');
+// Se connecter à MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log('Connecté à MongoDB avec succès');
+    
+    // Démarrer le serveur uniquement si la connexion à MongoDB réussit
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => {
+      console.log(`Serveur démarré sur le port ${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Erreur de connexion à MongoDB :', error.message);
+    process.exit(1);
+  });
+
+// Middleware pour parser le JSON
+app.use(express.json());
+
+// Route de test
+app.get('/', (req, res) => {
+  res.json({ message: 'API Doualair Blog fonctionnelle' });
+});
+
+// Gestion des erreurs
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Quelque chose a mal tourné !' });
 });
