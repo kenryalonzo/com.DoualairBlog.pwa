@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import userRoute from "./routes/user.route.js";
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -33,10 +34,7 @@ mongoose.connect(process.env.MONGO_URI)
 // Middleware pour parser le JSON
 app.use(express.json());
 
-// Route de test
-app.get('/', (req, res) => {
-  res.json({ message: 'API Doualair Blog fonctionnelle' });
-});
+app.use('/api/user', userRoute);
 
 // Gestion des erreurs
 app.use((err, req, res, next) => {
