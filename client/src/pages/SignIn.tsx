@@ -13,6 +13,9 @@ import {
 } from "react-icons/fi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useDispatch } from "react-redux";
+import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice";
+
 
 interface FormData {
   email: string;
@@ -37,7 +40,7 @@ const SignIn = () => {
     password: false,
   });
   const navigate = useNavigate();
-
+  const dispatch = useDispatch();
   // Validation en temps réel
   useEffect(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -60,6 +63,7 @@ const SignIn = () => {
 
     setIsSubmitting(true);
     try {
+      dispatch(signInStart());
       const res = await fetch("/api/auth/signin", {
         method: "POST",
         headers: {
@@ -68,7 +72,7 @@ const SignIn = () => {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-
+      dispatch(signInSuccess(data));
       if (res.ok) {
         toast.success("Connexion réussie !", {
           position: "top-right",
@@ -92,7 +96,8 @@ const SignIn = () => {
           draggable: true,
         });
       }
-    } catch {
+      } catch (error) {
+      dispatch(signInFailure(error as string || "Erreur lors de la connexion"));
       toast.error("Erreur lors de la connexion", {
         position: "top-right",
         autoClose: 3000,

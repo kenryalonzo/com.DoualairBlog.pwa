@@ -4,17 +4,41 @@ const userSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        trim: true,
+        minlength: 3,
+        maxlength: 30
     },
     email: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        lowercase: true,
+        trim: true
     },
     password: {
         type: String,
-        required: true
+        required: true,
+        minlength: 6
     },
+    role: {
+        type: String,
+        enum: ['user', 'admin', 'moderator'],
+        default: 'user'
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    lastLogin: {
+        type: Date,
+        default: null
+    },
+    refreshTokens: [{
+        token: String,
+        expiresAt: Date,
+        deviceInfo: String
+    }]
 }, {timestamps: true});
 
 const User = mongoose.model("User", userSchema);
