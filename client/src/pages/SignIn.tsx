@@ -15,6 +15,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useDispatch } from "react-redux";
 import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice";
+import OAuth from "../components/OAuth"; // Import the OAuth component
 
 
 interface FormData {
@@ -43,7 +44,7 @@ const SignIn = () => {
   const dispatch = useDispatch();
   // Validation en temps réel
   useEffect(() => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[^s@]+@[^s@]+.[^s@]+$/;
 
     setIsValid({
       email: emailRegex.test(formData.email.trim()),
@@ -426,21 +427,8 @@ const SignIn = () => {
               <div className="flex-grow border-t border-gray-300/30"></div>
             </motion.div>
 
-            {/* Bouton Google */}
-            <motion.button
-              type="button"
-              className="w-full flex items-center justify-center py-3.5 px-6 rounded-lg border-2 border-gray-200/20 bg-white/10 text-gray-300 font-medium hover:bg-white/20 transition-all duration-200 backdrop-blur-sm"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              whileHover={{
-                y: -2,
-                boxShadow: "0 4px 20px -5px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              <FcGoogle className="w-5 h-5 mr-3" />
-              <span>Continuer avec Google</span>
-            </motion.button>
+            {/* Google OAuth button */}
+            <OAuth />
 
             {/* Lien d'inscription */}
             <motion.div

@@ -240,7 +240,7 @@ const Footer = () => {
             </ul>
             
             <div className="mt-4 p-4 bg-gradient-to-br from-blue-900/50 to-cyan-900/30 rounded-xl border border-cyan-700/30">
-              <p className="text-sm text-cyan-200 mb-2 flex items-center">
+              <div className="text-sm text-cyan-200 mb-2 flex items-center">
                 <span className="flex space-x-1 mr-2">
                   {[...Array(3)].map((_, i) => (
                     <motion.div
@@ -259,7 +259,7 @@ const Footer = () => {
                   ))}
                 </span>
                 Assistance en ligne 24/7
-              </p>
+              </div>
               <p className="text-xs text-gray-400">
                 Notre équipe est disponible pour répondre à vos questions
               </p>

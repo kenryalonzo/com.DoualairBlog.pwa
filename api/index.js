@@ -33,7 +33,7 @@ const corsOptions = {
   origin:
     process.env.NODE_ENV === "production"
       ? [process.env.FRONTEND_URL || "http://localhost:5173"]
-      : ["http://localhost:5173", "http://localhost:3000"],
+      : ["http://localhost:5173", "http://localhost:3000", "https://5173-firebase-comdoualairblogpwa-1753783852336.cluster-ikslh4rdsnbqsvu5nw3v4dqjj2.cloudworkstations.dev"], // Added the Cloud Workstations frontend origin
   credentials: true, // Permettre les cookies
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],

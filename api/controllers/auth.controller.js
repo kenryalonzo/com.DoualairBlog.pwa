@@ -130,6 +130,68 @@ export const signin = async (req, res, next) => {
   }
 };
 
+export const googleAuth = async (req, res, next) => {
+  try {
+    const { name, email, photo } = req.body;
+
+    // Try to find the user by email
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (user) {
+      // If user exists, update their information (optional) and generate tokens
+      // You might want to update the user's name or photo if they changed it on Google
+      user.username = name; // Update username from Google
+      user.photo = photo; // Update photo from Google
+      user.lastLogin = new Date();
+      await user.save();
+
+    } else {
+      // If user does not exist, create a new user
+      // Generate a random password for the new user (they will use Google for sign-in)
+      const generatedPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+      const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
+
+      user = new User({
+        username: name.split(" ").join("").toLowerCase() + Math.random().toString(36).slice(-4), // Generate a unique username
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        photo: photo,
+        googleAuth: true, // Mark user as authenticated via Google
+      });
+      await user.save();
+    }
+
+    // Generate tokens for the user
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // Save the refresh token
+    const deviceInfo = req.headers["user-agent"] || "Unknown device";
+    user.refreshTokens.push({
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      deviceInfo,
+    });
+    await user.save();
+
+    // Set cookies
+    setAuthCookies(res, accessToken, refreshToken);
+
+    // Return user data (without password and refresh tokens)
+    const { password: pass, refreshTokens, ...userData } = user._doc;
+
+    res.status(200).json({
+      success: true,
+      message: "Google authentication successful",
+      user: userData,
+    });
+
+  } catch (error) {
+    console.error("Error during Google authentication:", error);
+    next(errorHandler(500, "Error during Google authentication"));
+  }
+};
+
 // Rafraîchir le token d'accès
 export const refreshToken = async (req, res, next) => {
   try {
