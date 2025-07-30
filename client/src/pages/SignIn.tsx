@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
-import { FcGoogle } from "react-icons/fc";
 import {
   FiEye,
   FiEyeOff,
@@ -65,16 +64,19 @@ const SignIn = () => {
     setIsSubmitting(true);
     try {
       dispatch(signInStart());
-      const res = await fetch("/api/auth/signin", {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+      const res = await fetch(`${apiUrl}/auth/signin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // Important pour les cookies
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      dispatch(signInSuccess(data));
+      
       if (res.ok) {
+        dispatch(signInSuccess(data.user || data));
         toast.success("Connexion réussie !", {
           position: "top-right",
           autoClose: 3000,
@@ -88,6 +90,7 @@ const SignIn = () => {
           navigate("/dashboard");
         }, 1500);
       } else {
+        dispatch(signInFailure(data.message || "Erreur de connexion"));
         toast.error(data.message || "Erreur de connexion", {
           position: "top-right",
           autoClose: 3000,
@@ -97,8 +100,9 @@ const SignIn = () => {
           draggable: true,
         });
       }
-      } catch (error) {
-      dispatch(signInFailure(error as string || "Erreur lors de la connexion"));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de la connexion";
+      dispatch(signInFailure(errorMessage));
       toast.error("Erreur lors de la connexion", {
         position: "top-right",
         autoClose: 3000,
@@ -382,9 +386,8 @@ const SignIn = () => {
               }
               initial={{ opacity: 0, y: 20 }}
               animate={{
-                opacity: 1,
-                y: 0,
                 opacity: isValid.email && isValid.password ? 1 : 0.7,
+                y: 0,
               }}
               transition={{ delay: 0.6 }}
             >

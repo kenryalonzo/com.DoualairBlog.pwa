@@ -132,17 +132,24 @@ export const signin = async (req, res, next) => {
 
 export const googleAuth = async (req, res, next) => {
   try {
+    console.log("[GoogleAuth] Request received:", { name: req.body.name, email: req.body.email, hasPhoto: !!req.body.photo });
     const { name, email, photo } = req.body;
+
+    if (!name || !email) {
+      console.log("[GoogleAuth] Missing required fields:", { name: !!name, email: !!email });
+      return next(errorHandler(400, "Nom et email sont requis pour l'authentification Google"));
+    }
 
     // Try to find the user by email
     let user = await User.findOne({ email: email.toLowerCase() });
+    console.log("[GoogleAuth] User found:", !!user);
 
     if (user) {
       // If user exists, update their information (optional) and generate tokens
       // You might want to update the user's name or photo if they changed it on Google
-      user.username = name; // Update username from Google
-      user.photo = photo; // Update photo from Google
+      if (photo) user.photo = photo; // Update photo from Google only if provided
       user.lastLogin = new Date();
+      user.googleAuth = true; // Mark as Google authenticated
       await user.save();
 
     } else {
@@ -180,6 +187,7 @@ export const googleAuth = async (req, res, next) => {
     // Return user data (without password and refresh tokens)
     const { password: pass, refreshTokens, ...userData } = user._doc;
 
+    console.log("[GoogleAuth] Authentication successful for user:", userData.email);
     res.status(200).json({
       success: true,
       message: "Google authentication successful",
@@ -187,8 +195,8 @@ export const googleAuth = async (req, res, next) => {
     });
 
   } catch (error) {
-    console.error("Error during Google authentication:", error);
-    next(errorHandler(500, "Error during Google authentication"));
+    console.error("[GoogleAuth] Error during Google authentication:", error);
+    next(errorHandler(500, "Erreur lors de l'authentification Google"));
   }
 };
 

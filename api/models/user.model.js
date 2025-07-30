@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 6
     },
+    photo: {
+        type: String,
+        default: null
+    },
+    googleAuth: {
+        type: Boolean,
+        default: false
+    },
     role: {
         type: String,
         enum: ['user', 'admin', 'moderator'],

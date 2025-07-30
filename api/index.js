@@ -26,25 +26,19 @@ for (const envVar of requiredEnvVars) {
 }
 
 // Initialiser l'application Express
-const app = express();
+const app = express(); 
 
-// Configuration CORS
-const corsOptions = {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? [process.env.FRONTEND_URL || "http://localhost:5173"]
-      : ["http://localhost:5173", "http://localhost:3000", "https://5173-firebase-comdoualairblogpwa-1753783852336.cluster-ikslh4rdsnbqsvu5nw3v4dqjj2.cloudworkstations.dev"], // Added the Cloud Workstations frontend origin
-  credentials: true, // Permettre les cookies
+// Configuration CORS simplifiée
+app.use(cors({
+  origin: true, // Permettre toutes les origines en développement
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  exposedHeaders: ["Set-Cookie"],
-};
+}));
 
-app.use(cors(corsOptions));
-
-// Middleware de sécurité
-app.use(helmetConfig);
-app.use(generalLimiter);
+// Middleware de sécurité (temporairement désactivé pour debugging)
+// app.use(helmetConfig);
+// app.use(generalLimiter);
 
 // Middleware pour parser les cookies et JSON
 app.use(cookieParser());
