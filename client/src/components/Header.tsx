@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   SunIcon,
   MoonIcon,
@@ -8,6 +9,21 @@ import {
   XMarkIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
+import UserProfile from "./UserProfile";
+
+interface User {
+  _id: string;
+  username: string;
+  name?: string;
+  email: string;
+  photo?: string;
+}
+
+interface RootState {
+  user: {
+    currentUser: User | null;
+  };
+}
 
 const navLinks = [
   { name: "Accueil", path: "/" },
@@ -25,6 +41,7 @@ const Header = () => {
   const [isHoveringLogo, setIsHoveringLogo] = useState(false);
   const location = useLocation();
   const particlesRef = useRef<HTMLDivElement>(null);
+  const { currentUser } = useSelector((state: RootState) => state.user);
 
   // Créer des particules animées autour du logo au survol
   useEffect(() => {
@@ -345,30 +362,34 @@ const Header = () => {
                 )}
               </motion.button>
 
-              <Link to="/sign-in">
-                <motion.button
-                  whileHover={{
-                    scale: 1.05,
-                    background: [
-                      "linear-gradient(to right, #3b82f6, #60a5fa)",
-                      "linear-gradient(to right, #60a5fa, #38bdf8)",
-                      "linear-gradient(to right, #38bdf8, #22d3ee)",
-                      "linear-gradient(to right, #22d3ee, #818cf8)",
-                      "linear-gradient(to right, #818cf8, #3b82f6)",
-                    ],
-                    transition: {
-                      duration: 1.5,
-                      repeat: Infinity,
-                      repeatType: "reverse",
-                    },
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  className="ml-4 hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-lg text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 focus:outline-none"
-                >
-                  <SparklesIcon className="h-4 w-4 mr-1" />
-                  <span>Se connecter</span>
-                </motion.button>
-              </Link>
+              {currentUser ? (
+                <UserProfile />
+              ) : (
+                <Link to="/sign-in">
+                  <motion.button
+                    whileHover={{
+                      scale: 1.05,
+                      background: [
+                        "linear-gradient(to right, #3b82f6, #60a5fa)",
+                        "linear-gradient(to right, #60a5fa, #38bdf8)",
+                        "linear-gradient(to right, #38bdf8, #22d3ee)",
+                        "linear-gradient(to right, #22d3ee, #818cf8)",
+                        "linear-gradient(to right, #818cf8, #3b82f6)",
+                      ],
+                      transition: {
+                        duration: 1.5,
+                        repeat: Infinity,
+                        repeatType: "reverse",
+                      },
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                    className="ml-4 hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-lg text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 focus:outline-none"
+                  >
+                    <SparklesIcon className="h-4 w-4 mr-1" />
+                    <span>Se connecter</span>
+                  </motion.button>
+                </Link>
+              )}
             </div>
 
             {/* Bouton menu mobile - Animation transformée en croix */}
@@ -433,14 +454,20 @@ const Header = () => {
                 variants={mobileLinkVariants}
                 className="block px-3 py-2 mt-4"
               >
-                <Link
-                  to="/sign-in"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="w-full flex justify-center items-center px-4 py-3 rounded-full text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md"
-                >
-                  <SparklesIcon className="h-5 w-5 mr-2" />
-                  Se connecter
-                </Link>
+                {currentUser ? (
+                  <div className="px-4 py-3">
+                    <UserProfile />
+                  </div>
+                ) : (
+                  <Link
+                    to="/sign-in"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex justify-center items-center px-4 py-3 rounded-full text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-md"
+                  >
+                    <SparklesIcon className="h-5 w-5 mr-2" />
+                    Se connecter
+                  </Link>
+                )}
               </motion.div>
             </div>
           </motion.div>

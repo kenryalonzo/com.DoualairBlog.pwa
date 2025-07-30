@@ -48,7 +48,7 @@ export default function OAuth() {
         draggable: true,
       });
       // Use navigate instead of window.location.href
-      setTimeout(() => navigate("/dashboard"), 1000);
+      setTimeout(() => navigate("/"), 1000);
     } catch (error) {
       console.error("Could not initiate Google sign in", error);
       const errorMessage =
@@ -102,7 +102,7 @@ export default function OAuth() {
         pauseOnHover: true,
         draggable: true,
       });
-      setTimeout(() => navigate("/dashboard"), 1000);
+      setTimeout(() => navigate("/"), 1000);
     } catch (error) {
       console.error("[OAuth] Fallback error:", error);
       const errorMessage =

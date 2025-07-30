@@ -148,6 +148,7 @@ export const googleAuth = async (req, res, next) => {
       // If user exists, update their information (optional) and generate tokens
       // You might want to update the user's name or photo if they changed it on Google
       if (photo) user.photo = photo; // Update photo from Google only if provided
+      if (name && !user.name) user.name = name; // Add name if not exists
       user.lastLogin = new Date();
       user.googleAuth = true; // Mark as Google authenticated
       await user.save();
@@ -160,6 +161,7 @@ export const googleAuth = async (req, res, next) => {
 
       user = new User({
         username: name.split(" ").join("").toLowerCase() + Math.random().toString(36).slice(-4), // Generate a unique username
+        name: name, // Store the full name from Google
         email: email.toLowerCase(),
         password: hashedPassword,
         photo: photo,

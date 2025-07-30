@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema({
         minlength: 3,
         maxlength: 30
     },
+    name: {
+        type: String,
+        trim: true,
+        maxlength: 100
+    },
     email: {
         type: String,
         required: true,

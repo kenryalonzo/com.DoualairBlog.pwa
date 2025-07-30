@@ -49,7 +49,7 @@ export default function AuthHandler() {
               pauseOnHover: true,
               draggable: true,
             });
-            navigate("/dashboard");
+            navigate("/");
           } else {
             console.error("[AuthHandler] Backend error:", data);
             toast.error(data.message || "Erreur lors de la connexion Google", {
