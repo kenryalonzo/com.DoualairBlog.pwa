@@ -20,7 +20,8 @@ export default function AuthHandler() {
 
         if (result) {
           // Send user information to your backend for authentication
-          const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+          const apiUrl =
+            import.meta.env.VITE_API_URL || "http://localhost:3000/api";
           const res = await fetch(`${apiUrl}/auth/google`, {
             method: "POST",
             headers: {

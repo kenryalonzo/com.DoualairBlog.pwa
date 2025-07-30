@@ -3,7 +3,11 @@ import { app } from "../firebase";
 import { toast } from "react-toastify";
 import { FcGoogle } from "react-icons/fc";
 import { useDispatch } from "react-redux";
-import { signInSuccess, signInStart, signInFailure } from "../redux/user/userSlice";
+import {
+  signInSuccess,
+  signInStart,
+  signInFailure,
+} from "../redux/user/userSlice";
 import { useNavigate } from "react-router-dom";
 import { authService } from "../services/api";
 
@@ -15,7 +19,7 @@ export default function OAuth() {
     try {
       console.log("[OAuth] Starting Google sign in...");
       dispatch(signInStart());
-      
+
       const provider = new GoogleAuthProvider();
       const auth = getAuth(app);
 
@@ -47,7 +51,10 @@ export default function OAuth() {
       setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error) {
       console.error("Could not initiate Google sign in", error);
-      const errorMessage = error instanceof Error ? error.message : "Erreur lors de l'initialisation de la connexion Google";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de l'initialisation de la connexion Google";
       dispatch(signInFailure(errorMessage));
 
       // Fallback: Test authentication with mock data
@@ -98,7 +105,10 @@ export default function OAuth() {
       setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error) {
       console.error("[OAuth] Fallback error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erreur lors de la connexion de test";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la connexion de test";
       dispatch(signInFailure(errorMessage));
       toast.error("Erreur lors de la connexion de test");
     }
