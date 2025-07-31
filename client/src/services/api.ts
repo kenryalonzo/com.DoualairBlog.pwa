@@ -76,4 +76,32 @@ export const authService = {
     apiCall("/auth/profile"),
 };
 
+// Services utilisateur
+export const userService = {
+  // Mettre à jour le profil
+  updateProfile: (profileData: { username?: string; email?: string; name?: string; photo?: string }) =>
+    apiCall("/user/profile", {
+      method: "PUT",
+      body: JSON.stringify(profileData),
+    }),
+
+  // Mettre à jour le mot de passe
+  updatePassword: (passwordData: { currentPassword: string; newPassword: string }) =>
+    apiCall("/user/password", {
+      method: "PUT",
+      body: JSON.stringify(passwordData),
+    }),
+
+  // Supprimer le compte
+  deleteAccount: (password: string) =>
+    apiCall("/user/account", {
+      method: "DELETE",
+      body: JSON.stringify({ password }),
+    }),
+
+  // Obtenir les statistiques utilisateur
+  getUserStats: () =>
+    apiCall("/user/stats"),
+};
+
 export default authService;

@@ -5,6 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/dlair.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Doualair Blog</title>
+    <script>
+      // Initialisation précoce du thème pour éviter le flash
+      (function() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+          document.documentElement.classList.add('dark');
+        } else {
+          // Mode clair par défaut
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import {
   SunIcon,
   MoonIcon,
@@ -10,6 +10,7 @@ import {
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import UserProfile from "./UserProfile";
+import { toggleTheme } from "../redux/theme/themeSlice";
 
 interface User {
   _id: string;
@@ -22,6 +23,9 @@ interface User {
 interface RootState {
   user: {
     currentUser: User | null;
+  };
+  theme: {
+    isDarkMode: boolean;
   };
 }
 
@@ -36,12 +40,13 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [darkMode, setDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isHoveringLogo, setIsHoveringLogo] = useState(false);
   const location = useLocation();
   const particlesRef = useRef<HTMLDivElement>(null);
+  const dispatch = useDispatch();
   const { currentUser } = useSelector((state: RootState) => state.user);
+  const { isDarkMode } = useSelector((state: RootState) => state.theme);
 
   // Créer des particules animées autour du logo au survol
   useEffect(() => {
@@ -117,14 +122,7 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Basculement du mode sombre
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
+  // Le thème est maintenant géré par Redux, pas besoin de useEffect local
 
   // Animation de la barre de recherche
   const searchBarVariants = {
@@ -348,14 +346,14 @@ const Header = () => {
               </AnimatePresence>
 
               <motion.button
-                onClick={() => setDarkMode(!darkMode)}
+                onClick={() => dispatch(toggleTheme())}
                 className="p-2 rounded-full text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-cyan-400 ml-2"
-                whileHover={{ scale: 1.2, rotate: darkMode ? 0 : 180 }}
+                whileHover={{ scale: 1.2, rotate: isDarkMode ? 0 : 180 }}
                 whileTap={{ scale: 0.9 }}
-                animate={{ rotate: darkMode ? 180 : 0 }}
+                animate={{ rotate: isDarkMode ? 180 : 0 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                {darkMode ? (
+                {isDarkMode ? (
                   <SunIcon className="h-5 w-5" />
                 ) : (
                   <MoonIcon className="h-5 w-5" />
