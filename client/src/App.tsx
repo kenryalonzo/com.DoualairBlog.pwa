@@ -14,14 +14,13 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AuthHandler from "./components/AuthHandler";
 import ThemeProvider from "./components/ThemeProvider";
-import ThemeTest from "./components/ThemeTest";
 
 function App() {
   return (
     <Router>
       <ThemeProvider>
         <AuthHandler />
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+        <div className="min-h-screen bg-base-100 transition-colors duration-200">
           <Header />
           <main className="pt-24 px-4 sm:px-6 lg:px-8 pb-12">
             <Routes>
@@ -42,7 +41,6 @@ function App() {
           </main>
         </div>
         <Footer />
-        <ThemeTest />
       </ThemeProvider>
     </Router>
   );

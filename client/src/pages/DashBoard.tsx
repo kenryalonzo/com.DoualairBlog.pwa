@@ -217,7 +217,8 @@ const DashBoard = () => {
   // Fonction pour gérer la déconnexion
   const handleSignOut = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+      const apiUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
       const res = await fetch(`${apiUrl}/auth/signout`, {
         method: "POST",
         credentials: "include",
@@ -531,7 +532,8 @@ const DashBoard = () => {
                   <div className="bg-red-50/10 dark:bg-red-900/10 border border-red-200/20 dark:border-red-800/20 rounded-lg p-4">
                     <div className="space-y-4">
                       <p className="text-sm text-red-600 dark:text-red-400">
-                        Cette action est irréversible. Toutes vos données seront supprimées.
+                        Cette action est irréversible. Toutes vos données seront
+                        supprimées.
                       </p>
                       <div className="flex items-center space-x-3">
                         <input
@@ -551,7 +553,9 @@ const DashBoard = () => {
                           whileTap={{ scale: 0.98 }}
                         >
                           <TrashIcon className="w-4 h-4" />
-                          <span>{loading ? "Suppression..." : "Supprimer"}</span>
+                          <span>
+                            {loading ? "Suppression..." : "Supprimer"}
+                          </span>
                         </motion.button>
                       </div>
                     </div>
