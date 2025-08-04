@@ -57,11 +57,11 @@ const userSchema = new Schema<IUserDocument>(
       lowercase: true,
       trim: true,
     },
-  password: {
-    type: String,
-    required: false, // Optionnel pour OAuth
-    minlength: 6,
-  },
+    password: {
+      type: String,
+      required: false, // Optionnel pour OAuth
+      minlength: 6,
+    },
     avatar: {
       type: String,
       default: null,

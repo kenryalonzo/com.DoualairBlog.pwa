@@ -139,10 +139,10 @@ const SignIn = () => {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-        console.log("[SignIn] API response:", data);
+      console.log("[SignIn] API response:", data);
 
       if (res.ok) {
-          dispatch(signInSuccess(data.data?.user || data.user));
+        dispatch(signInSuccess(data.data?.user || data.user));
         toast.success("Connexion réussie !", {
           position: "top-right",
           autoClose: 3000,

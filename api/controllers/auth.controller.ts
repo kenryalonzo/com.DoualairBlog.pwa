@@ -309,7 +309,7 @@ export const googleAuth: ControllerFunction = async (
 ) => {
   try {
     const { name, email, photo } = req.body;
-    console.log('[googleAuth] photo reçu du front:', photo);
+    console.log("[googleAuth] photo reçu du front:", photo);
 
     if (!email) {
       return next(
@@ -326,12 +326,12 @@ export const googleAuth: ControllerFunction = async (
       user = new User({
         username: email.split("@")[0],
         email: email,
-        provider: 'google',
+        provider: "google",
         firstName: firstName,
         lastName: lastName,
         avatar: photo || null,
         isActive: true,
-        lastLogin: new Date()
+        lastLogin: new Date(),
       });
       await user.save();
     } else {
@@ -365,10 +365,10 @@ export const googleAuth: ControllerFunction = async (
           firstName: user.firstName,
           lastName: user.lastName,
           photo: user.avatar,
-          role: user.role
+          role: user.role,
         },
-        tokens: tokens
-      }
+        tokens: tokens,
+      },
     });
   } catch (error) {
     next(error);

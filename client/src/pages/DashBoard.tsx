@@ -1,5 +1,5 @@
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as m, motion } from "framer-motion";
 import {
   Camera,
   KeyRound,
@@ -113,7 +113,7 @@ const ProfileSettings = ({
             Mettez à jour votre photo de profil.
           </p>
 
-          <div className="flex items-center gap-6 mt-4">
+          <div className="flex flex-col md:flex-row items-center gap-6 mt-4">
             <div className="avatar">
               <div className="w-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
                 <img
@@ -144,7 +144,7 @@ const ProfileSettings = ({
             />
             <button
               onClick={() => filePickerRef.current?.click()}
-              className="btn btn-outline"
+              className="btn btn-outline w-full md:w-auto"
             >
               Changer la photo
             </button>
@@ -164,7 +164,7 @@ const ProfileSettings = ({
           </p>
 
           <div className="form-control w-full mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="label">
                   <span className="label-text">Nom d'utilisateur</span>
@@ -279,7 +279,7 @@ const SecuritySettings = ({
           </p>
 
           <div className="form-control w-full mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="label">
                   <span className="label-text">Nouveau mot de passe</span>
@@ -379,17 +379,12 @@ const DashBoard = () => {
     profilePicture: null,
   };
 
-  console.log("[Dashboard] Current user:", currentUser);
-  console.log("[Dashboard] User object:", user);
-
   // --- Gestion du routage ---
   const currentSection = searchParams.get("section") || "profile";
 
   // Déterminer l'onglet actif basé sur l'URL
   const getActiveTab = () => {
-    if (currentSection === "security") {
-      return "security";
-    }
+    if (currentSection === "security") return "security";
     return "profile";
   };
 
@@ -399,9 +394,7 @@ const DashBoard = () => {
   const navigateToSection = (section: string, action?: string) => {
     const params = new URLSearchParams();
     params.set("section", section);
-    if (action) {
-      params.set("action", action);
-    }
+    if (action) params.set("action", action);
     setSearchParams(params);
   };
 
@@ -410,9 +403,7 @@ const DashBoard = () => {
     try {
       const response = await fetch("/api/auth/signout", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
 
@@ -426,10 +417,7 @@ const DashBoard = () => {
           pauseOnHover: true,
           draggable: true,
         });
-        // Délai pour permettre au toast de s'afficher
-        setTimeout(() => {
-          navigate("/");
-        }, 1000);
+        setTimeout(() => navigate("/"), 1000);
       } else {
         toast.error("Erreur lors de la déconnexion", {
           position: "top-right",
@@ -443,11 +431,8 @@ const DashBoard = () => {
         position: "top-right",
         autoClose: 3000,
       });
-      // Même en cas d'erreur, on déconnecte localement
       dispatch(signOutSuccess());
-      setTimeout(() => {
-        navigate("/");
-      }, 1000);
+      setTimeout(() => navigate("/"), 1000);
     }
   };
 
@@ -455,9 +440,7 @@ const DashBoard = () => {
     try {
       const response = await fetch("/api/user/profile", {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
 
@@ -487,9 +470,7 @@ const DashBoard = () => {
     try {
       const response = await fetch("/api/user/profile", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(data),
       });
@@ -503,9 +484,6 @@ const DashBoard = () => {
 
       const result = await response.json();
       console.log("Profil mis à jour:", result);
-
-      // Mettre à jour le state Redux si nécessaire
-      // dispatch(updateUserProfile(result));
     } catch (error) {
       console.error("Erreur lors de la mise à jour du profil:", error);
       throw error;
@@ -516,22 +494,15 @@ const DashBoard = () => {
     newPassword: string,
     confirmPassword: string
   ) => {
-    // Validation côté frontend
-    if (newPassword !== confirmPassword) {
+    if (newPassword !== confirmPassword)
       throw new Error("Les mots de passe ne correspondent pas");
-    }
 
     try {
       const response = await fetch("/api/auth/change-password", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          currentPassword: "", // L'utilisateur devra fournir l'ancien mot de passe
-          newPassword,
-        }),
+        body: JSON.stringify({ newPassword }),
       });
 
       if (!response.ok) {
@@ -560,25 +531,13 @@ const DashBoard = () => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // --- Éléments de menu ---
   const menuItems = [
-    {
-      id: "profile",
-      name: "Modifier mon compte",
-      icon: User,
-      url: "profile",
-    },
-    {
-      id: "security",
-      name: "Sécurité",
-      icon: ShieldCheck,
-      url: "security",
-    },
+    { id: "profile", name: "Profil", icon: User, url: "profile" },
+    { id: "security", name: "Sécurité", icon: ShieldCheck, url: "security" },
   ];
 
   // --- Rendu du contenu dynamique ---
@@ -607,14 +566,14 @@ const DashBoard = () => {
   return (
     <div className="min-h-screen bg-base-200 text-base-content">
       {/* Layout principal */}
-      <div className="flex">
+      <div className="flex flex-col lg:flex-row">
         {/* Sidebar (Desktop) */}
         <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
           <div className="fixed left-0 top-0 h-full w-64 bg-base-100 shadow-xl border-r border-base-300 flex flex-col z-50">
             {/* Logo */}
             <div className="navbar bg-base-100 border-b border-base-300">
               <div className="flex-1">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 p-4">
                   <Palette className="w-6 h-6 text-primary" />
                   <h1 className="text-xl font-bold">Mon Dashboard</h1>
                 </div>
@@ -622,16 +581,38 @@ const DashBoard = () => {
             </div>
 
             {/* Navigation */}
-            <div className="flex-1 p-4">
+            <div className="flex-1 p-4 overflow-y-auto">
               <ul className="menu menu-lg bg-base-100 w-full">
                 {menuItems.map((item) => (
                   <li key={item.id}>
                     <button
                       onClick={() => navigateToSection(item.url)}
-                      className={`${activeTab === item.id ? "active" : ""}`}
+                      className={`${
+                        activeTab === item.id ? "bg-base-200" : ""
+                      } rounded-lg`}
                     >
                       <item.icon className="w-5 h-5" />
                       {item.name}
+                      {item.id === "profile" && user?.role && (
+                        <m.span
+                          initial={{ scale: 0.7, opacity: 0, x: 10 }}
+                          animate={{ scale: 1, opacity: 1, x: 0 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 20,
+                          }}
+                          className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${
+                            user.role === "admin"
+                              ? "bg-gradient-to-r from-red-500 to-pink-500"
+                              : "bg-gradient-to-r from-blue-500 to-cyan-400"
+                          } text-white`}
+                        >
+                          {user.role === "admin"
+                            ? "ADMIN"
+                            : user.role.toUpperCase()}
+                        </m.span>
+                      )}
                     </button>
                   </li>
                 ))}
@@ -692,7 +673,7 @@ const DashBoard = () => {
               >
                 <div className="navbar bg-base-100 border-b border-base-300">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 p-4">
                       <Palette className="w-6 h-6 text-primary" />
                       <h1 className="text-xl font-bold">Dashboard</h1>
                     </div>
@@ -707,7 +688,7 @@ const DashBoard = () => {
                   </div>
                 </div>
 
-                <div className="flex-1 p-4">
+                <div className="flex-1 p-4 overflow-y-auto">
                   <ul className="menu menu-lg bg-base-100 w-full">
                     {menuItems.map((item) => (
                       <li key={item.id}>
@@ -716,10 +697,32 @@ const DashBoard = () => {
                             navigateToSection(item.url);
                             setIsSidebarOpen(false);
                           }}
-                          className={`${activeTab === item.id ? "active" : ""}`}
+                          className={`${
+                            activeTab === item.id ? "bg-base-200" : ""
+                          } rounded-lg`}
                         >
                           <item.icon className="w-5 h-5" />
                           {item.name}
+                          {item.id === "profile" && user?.role && (
+                            <m.span
+                              initial={{ scale: 0.7, opacity: 0, x: 10 }}
+                              animate={{ scale: 1, opacity: 1, x: 0 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 20,
+                              }}
+                              className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${
+                                user.role === "admin"
+                                  ? "bg-gradient-to-r from-red-500 to-pink-500"
+                                  : "bg-gradient-to-r from-blue-500 to-cyan-400"
+                              } text-white`}
+                            >
+                              {user.role === "admin"
+                                ? "ADMIN"
+                                : user.role.toUpperCase()}
+                            </m.span>
+                          )}
                         </button>
                       </li>
                     ))}
@@ -741,22 +744,20 @@ const DashBoard = () => {
         </AnimatePresence>
 
         {/* Contenu Principal */}
-        <main className="flex-1 lg:ml-64">
-          <div className="p-6 lg:p-10">
-            <div className="max-w-6xl mx-auto lg:mr-0 lg:ml-auto lg:pr-8">
-              {/* Header du contenu */}
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold">
-                  {menuItems.find((item) => item.id === activeTab)?.name}
-                </h2>
-                <p className="text-base-content/70 mt-2">
-                  Gérez les paramètres de votre compte ici.
-                </p>
-              </div>
-
-              {/* Contenu dynamique */}
-              <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
+        <main className="flex-1 lg:ml-64 p-4 lg:p-6">
+          <div className="max-w-6xl mx-auto">
+            {/* Header du contenu */}
+            <div className="mb-6">
+              <h2 className="text-3xl font-bold">
+                {menuItems.find((item) => item.id === activeTab)?.name}
+              </h2>
+              <p className="text-base-content/70 mt-2">
+                Gérez les paramètres de votre compte ici.
+              </p>
             </div>
+
+            {/* Contenu dynamique */}
+            <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
           </div>
         </main>
       </div>
@@ -774,7 +775,7 @@ const DashBoard = () => {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="modal-box max-w-md"
+              className="modal-box max-w-md bg-base-100"
             >
               <div className="text-center">
                 <div className="mx-auto w-12 h-12 rounded-full bg-error/20 flex items-center justify-center mb-4">
