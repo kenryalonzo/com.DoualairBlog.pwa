@@ -1,21 +1,24 @@
-import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import {
+  FiCheck,
   FiEye,
   FiEyeOff,
-  FiUser,
-  FiCheck,
-  FiX,
-  FiMail,
   FiLock,
+  FiMail,
+  FiUser,
+  FiX,
 } from "react-icons/fi";
+import { useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useDispatch } from "react-redux";
-import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice";
 import OAuth from "../components/OAuth"; // Import the OAuth component
-
+import {
+  signInFailure,
+  signInStart,
+  signInSuccess,
+} from "../redux/user/userSlice";
 
 interface FormData {
   email: string;
@@ -41,13 +44,74 @@ const SignIn = () => {
   });
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // Fonction pour calculer la force du mot de passe (identique à SignUp)
+  const getPasswordStrength = (password: string) => {
+    if (password.length === 0) {
+      return {
+        level: 0,
+        color: "bg-base-300",
+        label: "",
+        textColor: "text-base-content",
+      };
+    }
+
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/\d/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    if (score <= 1) {
+      return {
+        level: 1,
+        color: "bg-error",
+        label: "Faible",
+        textColor: "text-error",
+      };
+    } else if (score <= 3) {
+      return {
+        level: 2,
+        color: "bg-warning",
+        label: "Moyen",
+        textColor: "text-warning",
+      };
+    } else if (score <= 4) {
+      return {
+        level: 3,
+        color: "bg-info",
+        label: "Bon",
+        textColor: "text-info",
+      };
+    } else {
+      return {
+        level: 4,
+        color: "bg-success",
+        label: "Fort",
+        textColor: "text-success",
+      };
+    }
+  };
   // Validation en temps réel
   useEffect(() => {
-    const emailRegex = /^[^s@]+@[^s@]+.[^s@]+$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const emailValid = emailRegex.test(formData.email.trim());
+    const passwordValid = formData.password.trim().length >= 1;
 
     setIsValid({
-      email: emailRegex.test(formData.email.trim()),
-      password: formData.password.trim().length >= 1,
+      email: emailValid,
+      password: passwordValid,
+    });
+
+    // Debug: afficher l'état de validation
+    console.log("SignIn Validation state:", {
+      email: emailValid,
+      password: passwordValid,
+      allValid: emailValid && passwordValid,
+      emailValue: formData.email,
+      passwordValue: formData.password,
     });
   }, [formData]);
 
@@ -64,7 +128,8 @@ const SignIn = () => {
     setIsSubmitting(true);
     try {
       dispatch(signInStart());
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+      const apiUrl =
+        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
       const res = await fetch(`${apiUrl}/auth/signin`, {
         method: "POST",
         headers: {
@@ -74,9 +139,10 @@ const SignIn = () => {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      
+        console.log("[SignIn] API response:", data);
+
       if (res.ok) {
-        dispatch(signInSuccess(data.user || data));
+          dispatch(signInSuccess(data.data?.user || data.user));
         toast.success("Connexion réussie !", {
           position: "top-right",
           autoClose: 3000,
@@ -101,7 +167,8 @@ const SignIn = () => {
         });
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erreur lors de la connexion";
+      const errorMessage =
+        error instanceof Error ? error.message : "Erreur lors de la connexion";
       dispatch(signInFailure(errorMessage));
       toast.error("Erreur lors de la connexion", {
         position: "top-right",
@@ -217,7 +284,7 @@ const SignIn = () => {
     });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-cyan-100 dark:from-gray-900 dark:to-blue-900 overflow-hidden relative p-4">
+    <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200 flex items-center justify-center p-4">
       {/* Arrière-plan animé */}
       <div
         ref={particlesRef}
@@ -225,257 +292,427 @@ const SignIn = () => {
       />
       {floatingBubbles}
 
-      {/* Conteneur principal */}
+      {/* Conteneur principal avec effet glassmorphism */}
       <motion.div
-        className="bg-white/10 dark:bg-gray-800/10 backdrop-blur-lg rounded-xl shadow-2xl w-full max-w-4xl z-10 overflow-hidden border border-white/20 flex"
+        className="card w-full max-w-5xl bg-base-100/95 backdrop-blur-xl shadow-2xl border border-base-300/50 z-10 overflow-hidden"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        style={{
-          boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.15)",
-        }}
       >
-        {/* Partie gauche - Formulaire */}
-        <div className="w-1/2 p-8">
-          <motion.form
-            onSubmit={handleSubmit}
-            className="space-y-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Champ Email */}
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+        <div className="card-body p-0 flex flex-col lg:flex-row">
+          {/* Partie gauche - Formulaire */}
+          <div className="w-full lg:w-1/2 p-8 lg:p-12">
+            <motion.form
+              onSubmit={handleSubmit}
+              className="space-y-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
             >
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full pl-4 pr-10 py-3 rounded-lg border-2 ${
-                  formData.email
-                    ? isValid.email
-                      ? "border-emerald-400"
-                      : "border-red-400"
-                    : "border-gray-300 dark:border-gray-600"
-                } bg-white/20 dark:bg-gray-700/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm text-white placeholder:text-gray-300`}
-                placeholder="Adresse email"
-              />
-              <FiMail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              {formData.email && (
-                <motion.div
-                  className="absolute right-10 top-1/2 transform -translate-y-1/2"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                >
-                  {isValid.email ? (
-                    <FiCheck className="text-emerald-500" />
-                  ) : (
-                    <FiX className="text-red-500" />
-                  )}
-                </motion.div>
-              )}
-              {formData.email && !isValid.email && (
-                <motion.p
-                  className="mt-1 text-xs text-red-400"
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  Veuillez entrer une adresse email valide
-                </motion.p>
-              )}
-            </motion.div>
-
-            {/* Champ Password */}
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <input
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                required
-                value={formData.password}
-                onChange={handleChange}
-                className={`w-full pl-4 pr-12 py-3 rounded-lg border-2 ${
-                  formData.password
-                    ? isValid.password
-                      ? "border-emerald-400"
-                      : "border-red-400"
-                    : "border-gray-300 dark:border-gray-600"
-                } bg-white/20 dark:bg-gray-700/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 backdrop-blur-sm text-white placeholder:text-gray-300`}
-                placeholder="Mot de passe"
-              />
-              <FiLock className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-300 hover:text-blue-400 transition-colors"
-                onClick={() => setShowPassword(!showPassword)}
+              {/* Titre et description */}
+              <motion.div
+                className="text-center mb-8"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
               >
-                {showPassword ? (
-                  <FiEyeOff className="w-5 h-5" />
-                ) : (
-                  <FiEye className="w-5 h-5" />
-                )}
-              </button>
-            </motion.div>
-
-            {/* Options de connexion */}
-            <motion.div
-              className="flex items-center justify-between"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded bg-white/20"
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-gray-300"
-                >
-                  Se souvenir de moi
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
+                  Se connecter
+                </h1>
+                <p className="text-base-content/70">
+                  Accédez à votre compte Doualair
+                </p>
+              </motion.div>
+              {/* Champ Email */}
+              <motion.div
+                className="form-control"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <label className="label">
+                  <span className="label-text font-medium">Email</span>
                 </label>
-              </div>
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-cyan-400 hover:text-cyan-300"
-                >
-                  Mot de passe oublié ?
-                </a>
-              </div>
-            </motion.div>
+                <div className="relative group">
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`input input-bordered w-full pl-12 pr-12 transition-all duration-300 group-hover:input-primary ${
+                      formData.email
+                        ? isValid.email
+                          ? "input-success"
+                          : "input-error"
+                        : ""
+                    }`}
+                    placeholder="Entrez votre adresse email"
+                  />
+                  <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-base-content/50 group-hover:text-primary transition-colors" />
 
-            {/* Bouton de connexion */}
-            <motion.button
-              type="submit"
-              className={`w-full py-4 px-6 rounded-lg text-white font-bold shadow-lg transform transition-all duration-300 ${
-                isSubmitting || !(isValid.email && isValid.password)
-                  ? "bg-blue-400/50 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 hover:shadow-xl"
-              }`}
-              disabled={isSubmitting || !(isValid.email && isValid.password)}
-              whileHover={
-                !isSubmitting && isValid.email && isValid.password
-                  ? {
-                      scale: 1.02,
-                      boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.4)",
-                    }
-                  : {}
-              }
-              whileTap={
-                !isSubmitting && isValid.email && isValid.password
-                  ? {
-                      scale: 0.98,
-                    }
-                  : {}
-              }
-              initial={{ opacity: 0, y: 20 }}
-              animate={{
-                opacity: isValid.email && isValid.password ? 1 : 0.7,
-                y: 0,
-              }}
-              transition={{ delay: 0.6 }}
-            >
-              {isSubmitting ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
-                  <span className="ml-2">Connexion en cours...</span>
+                  {/* Animation de validation */}
+                  <AnimatePresence>
+                    {formData.email && (
+                      <motion.div
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2"
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        exit={{ scale: 0, rotate: 180 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 30,
+                        }}
+                      >
+                        {isValid.email ? (
+                          <motion.div
+                            className="w-6 h-6 bg-success rounded-full flex items-center justify-center"
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <FiCheck className="text-success-content text-sm" />
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            className="w-6 h-6 bg-error rounded-full flex items-center justify-center"
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <FiX className="text-error-content text-sm" />
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              ) : (
-                <span className="flex items-center justify-center">
-                  <span>Se connecter</span>
-                  <motion.span
-                    className="ml-2"
-                    animate={
-                      isValid.email && isValid.password
-                        ? {
-                            x: [0, 5, 0],
-                            transition: { repeat: Infinity, duration: 1.5 },
-                          }
-                        : {}
-                    }
+
+                {/* Animation de validation email */}
+                <AnimatePresence>
+                  {formData.email && (
+                    <motion.div
+                      className="mt-2"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <motion.div
+                          className={`w-3 h-3 rounded-full ${
+                            isValid.email ? "bg-success" : "bg-error"
+                          }`}
+                          animate={{
+                            scale: [1, 1.2, 1],
+                            opacity: [0.5, 1, 0.5],
+                          }}
+                          transition={{
+                            duration: 1.5,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        />
+                        <span className="text-xs opacity-70">
+                          {isValid.email
+                            ? "Format email valide"
+                            : "Format email invalide"}
+                        </span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* Champ Password */}
+              <motion.div
+                className="form-control"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <label className="label">
+                  <span className="label-text font-medium">Mot de passe</span>
+                </label>
+                <div className="relative group">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`input input-bordered w-full pl-12 pr-16 transition-all duration-300 group-hover:input-primary ${
+                      formData.password
+                        ? isValid.password
+                          ? "input-success"
+                          : "input-error"
+                        : ""
+                    }`}
+                    placeholder="Entrez votre mot de passe"
+                  />
+                  <FiLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-base-content/50 group-hover:text-primary transition-colors" />
+
+                  {/* Bouton toggle password */}
+                  <button
+                    type="button"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-base-content/50 hover:text-primary transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}
                   >
-                    →
-                  </motion.span>
-                </span>
-              )}
-            </motion.button>
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      {showPassword ? (
+                        <FiEyeOff className="w-5 h-5" />
+                      ) : (
+                        <FiEye className="w-5 h-5" />
+                      )}
+                    </motion.div>
+                  </button>
 
-            {/* Séparateur */}
-            <motion.div
-              className="flex items-center my-6"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-            >
-              <div className="flex-grow border-t border-gray-300/30"></div>
-              <span className="mx-4 text-gray-300 text-sm">
+                  {/* Animation de validation */}
+                  <AnimatePresence>
+                    {formData.password && (
+                      <motion.div
+                        className="absolute right-12 top-1/2 transform -translate-y-1/2"
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        exit={{ scale: 0, rotate: 180 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 500,
+                          damping: 30,
+                        }}
+                      >
+                        {isValid.password ? (
+                          <motion.div
+                            className="w-6 h-6 bg-success rounded-full flex items-center justify-center"
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <FiCheck className="text-success-content text-sm" />
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            className="w-6 h-6 bg-error rounded-full flex items-center justify-center"
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <FiX className="text-error-content text-sm" />
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Indicateur de force du mot de passe */}
+                <AnimatePresence>
+                  {formData.password && (
+                    <motion.div
+                      className="mt-2"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex space-x-1">
+                          {[...Array(4)].map((_, i) => {
+                            const strength = getPasswordStrength(
+                              formData.password
+                            );
+                            const shouldFill = i < strength.level;
+
+                            return (
+                              <motion.div
+                                key={i}
+                                className={`h-2 rounded-full flex-1 ${
+                                  shouldFill ? strength.color : "bg-base-300"
+                                }`}
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: 1 }}
+                                transition={{ delay: i * 0.1 }}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="opacity-70">
+                            Force du mot de passe
+                          </span>
+                          <span
+                            className={`font-medium ${
+                              getPasswordStrength(formData.password).textColor
+                            }`}
+                          >
+                            {getPasswordStrength(formData.password).label}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* Options de connexion */}
+              <motion.div
+                className="flex items-center justify-between"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <label className="label cursor-pointer">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="checkbox checkbox-primary"
+                  />
+                  <span className="label-text ml-2">Se souvenir de moi</span>
+                </label>
+                <div className="text-sm">
+                  <a href="#" className="link link-primary">
+                    Mot de passe oublié ?
+                  </a>
+                </div>
+              </motion.div>
+
+              {/* Bouton de connexion */}
+              <motion.button
+                type="submit"
+                className={`btn w-full h-12 text-lg font-medium shadow-lg ${
+                  isSubmitting || !(isValid.email && isValid.password)
+                    ? "btn-disabled opacity-50"
+                    : "btn-primary"
+                }`}
+                disabled={isSubmitting || !(isValid.email && isValid.password)}
+                whileHover={
+                  !isSubmitting && isValid.email && isValid.password
+                    ? { scale: 1.02, y: -2 }
+                    : {}
+                }
+                whileTap={
+                  !isSubmitting && isValid.email && isValid.password
+                    ? { scale: 0.98 }
+                    : {}
+                }
+                initial={{ opacity: 0, y: 20 }}
+                animate={{
+                  opacity: isValid.email && isValid.password ? 1 : 0.7,
+                  y: 0,
+                }}
+                transition={{ delay: 0.6 }}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center">
+                    <span className="loading loading-spinner loading-sm"></span>
+                    <span className="ml-2">Connexion en cours...</span>
+                  </div>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    <span>Se connecter</span>
+                    <motion.span
+                      className="ml-2"
+                      animate={
+                        isValid.email && isValid.password
+                          ? {
+                              x: [0, 5, 0],
+                              transition: { repeat: Infinity, duration: 1.5 },
+                            }
+                          : {}
+                      }
+                    >
+                      →
+                    </motion.span>
+                  </span>
+                )}
+              </motion.button>
+
+              {/* Séparateur */}
+              <motion.div
+                className="divider"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7 }}
+              >
                 Ou continuez avec
-              </span>
-              <div className="flex-grow border-t border-gray-300/30"></div>
-            </motion.div>
+              </motion.div>
 
-            {/* Google OAuth button */}
-            <OAuth />
+              {/* Google OAuth button */}
+              <OAuth />
 
-            {/* Lien d'inscription */}
-            <motion.div
-              className="mt-6 text-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9 }}
-            >
-              <p className="text-gray-300">
-                Vous n'avez pas de compte ?{" "}
-                <Link
-                  to="/sign-up"
-                  className="text-cyan-400 hover:text-cyan-300 font-medium transition-colors"
-                >
-                  Créez-en un
-                </Link>
-              </p>
-            </motion.div>
-          </motion.form>
-        </div>
+              {/* Lien d'inscription */}
+              <motion.div
+                className="text-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9 }}
+              >
+                <p className="text-base-content/70">
+                  Vous n'avez pas de compte ?{" "}
+                  <Link to="/sign-up" className="link link-primary">
+                    Créez-en un
+                  </Link>
+                </p>
+              </motion.div>
+            </motion.form>
+          </div>
 
-        {/* Partie droite - Favicon et texte */}
-        <motion.div
-          className="w-1/2 bg-gradient-to-b from-blue-600/30 to-cyan-500/30 p-8 flex flex-col items-center justify-center"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-        >
+          {/* Partie droite - Design moderne */}
           <motion.div
-            className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mb-6"
-            initial={{ scale: 0.8, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="hidden lg:flex w-1/2 bg-gradient-to-br from-primary/10 via-secondary/5 to-primary/10 p-12 flex-col items-center justify-center relative overflow-hidden"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
           >
-            <FiUser className="text-3xl text-white" />
+            {/* Effet de fond animé */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 animate-pulse"></div>
+
+            {/* Logo et contenu */}
+            <motion.div
+              className="relative z-10 text-center"
+              initial={{ scale: 0.8, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <div className="avatar placeholder mb-8">
+                <div className="bg-gradient-to-br from-primary to-secondary text-primary-content rounded-full w-32 h-32 flex items-center justify-center shadow-2xl relative">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <FiUser className="text-5xl" />
+                  </div>
+                </div>
+              </div>
+
+              <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                Bienvenue de retour
+              </h2>
+
+              <p className="text-lg opacity-80 leading-relaxed max-w-md">
+                Connectez-vous à votre compte pour accéder à toutes les
+                fonctionnalités de Doualair et retrouver vos contenus
+                personnalisés.
+              </p>
+
+              {/* Avantages */}
+              <div className="mt-8 space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
+                  <span className="opacity-80">
+                    Accès à vos articles favoris
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
+                  <span className="opacity-80">Historique de navigation</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
+                  <span className="opacity-80">Paramètres personnalisés</span>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
-          <h2 className="text-2xl font-bold text-white mb-4">
-            Bienvenue de retour
-          </h2>
-          <p className="text-gray-200 text-center">
-            Connectez-vous à votre compte pour accéder à toutes les
-            fonctionnalités de Doualair.
-          </p>
-        </motion.div>
+        </div>
       </motion.div>
 
       {/* Toast Container */}
@@ -483,7 +720,7 @@ const SignIn = () => {
 
       {/* Éléments décoratifs flottants */}
       <motion.div
-        className="absolute top-1/4 -left-20 w-48 h-48 bg-blue-400 rounded-full opacity-10 dark:opacity-20"
+        className="absolute top-1/4 -left-20 w-48 h-48 bg-primary/20 rounded-full"
         animate={{
           y: [0, -30, 0],
           scale: [1, 1.1, 1],
@@ -496,7 +733,7 @@ const SignIn = () => {
       />
 
       <motion.div
-        className="absolute bottom-1/4 -right-20 w-64 h-64 bg-cyan-300 rounded-full opacity-10 dark:opacity-20"
+        className="absolute bottom-1/4 -right-20 w-64 h-64 bg-secondary/20 rounded-full"
         animate={{
           y: [0, 30, 0],
           scale: [1, 1.1, 1],

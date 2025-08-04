@@ -1,19 +1,21 @@
 import {
+  Navigate,
+  Route,
   BrowserRouter as Router,
   Routes,
-  Route,
-  Navigate,
 } from "react-router-dom";
-import Home from "./pages/Home";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import AuthHandler from "./components/AuthHandler";
+import Footer from "./components/Footer";
+import Header from "./components/Header";
+import ThemeProvider from "./components/ThemeProvider";
 import About from "./pages/About";
+import DashBoard from "./pages/DashBoard";
+import Home from "./pages/Home";
+import Projects from "./pages/Projects";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
-import DashBoard from "./pages/DashBoard";
-import Projects from "./pages/Projects";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import AuthHandler from "./components/AuthHandler";
-import ThemeProvider from "./components/ThemeProvider";
 
 function App() {
   return (
@@ -41,6 +43,18 @@ function App() {
           </main>
         </div>
         <Footer />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
       </ThemeProvider>
     </Router>
   );

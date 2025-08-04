@@ -1,0 +1,9 @@
+{
+  "watch": ["api"],
+  "ext": "ts,js,json",
+  "ignore": ["api/dist", "node_modules"],
+  "exec": "tsx api/index.ts",
+  "env": {
+    "NODE_ENV": "development"
+  }
+}

@@ -1,21 +1,23 @@
-import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import {
-  UserIcon,
   ArrowRightOnRectangleIcon,
-  ChevronDownIcon,
+  UserIcon,
 } from "@heroicons/react/24/outline";
-import { signOutSuccess } from "../redux/user/userSlice";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { signOutSuccess } from "../redux/user/userSlice";
 
 interface User {
   _id: string;
   username: string;
+  firstName?: string;
+  lastName?: string;
   name?: string;
   email: string;
   photo?: string;
+  avatar?: string;
 }
 
 interface RootState {
@@ -27,165 +29,170 @@ interface RootState {
 const UserProfile = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { currentUser } = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { currentUser } = useSelector((state: RootState) => state.user);
 
-  // Fermer le dropdown quand on clique à l'extérieur
+  // Helper to format name
+  const formatName = (user: User | null) => {
+    if (!user) return "Utilisateur";
+    if (user.firstName && user.lastName)
+      return `${user.firstName} ${user.lastName}`;
+    if (user.name) return user.name;
+    return user.username || "Utilisateur";
+  };
+
+  // Handle profile click (placeholder for navigation or modal)
+  const handleProfileClick = () => {
+    // Add navigation or profile page logic here
+    console.log("Naviguer vers le profil");
+    setIsDropdownOpen(false);
+  };
+
+  // Handle sign out
+  const handleSignOut = () => {
+    dispatch(signOutSuccess());
+    navigate("/");
+    toast.success("Déconnexion réussie !");
+    setIsDropdownOpen(false);
+  };
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      dropdownRef.current &&
+      !dropdownRef.current.contains(event.target as Node)
+    ) {
+      setIsDropdownOpen(false);
+    }
+  };
+
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
-    };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-  const handleSignOut = async () => {
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-      const res = await fetch(`${apiUrl}/auth/signout`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        dispatch(signOutSuccess());
-        toast.success("Déconnexion réussie !", {
-          position: "top-right",
-          autoClose: 2000,
-        });
-        navigate("/");
-      } else {
-        toast.error("Erreur lors de la déconnexion", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
-    } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
-      toast.error("Erreur lors de la déconnexion", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }
-    setIsDropdownOpen(false);
-  };
-
-  const handleProfileClick = () => {
-    navigate("/dashboard");
-    setIsDropdownOpen(false);
-  };
-
-  // Formater le nom complet
-  const formatName = (name: string | undefined | null) => {
-    if (!name || typeof name !== 'string') {
-      return 'Utilisateur';
-    }
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-  };
-
-  if (!currentUser) return null;
-
   return (
-    <div className="relative" ref={dropdownRef}>
-      {/* Bouton profil avec photo */}
+    <div className="relative">
       <motion.button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="btn btn-ghost btn-circle avatar relative"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
+        aria-label="Menu utilisateur"
+        aria-expanded={isDropdownOpen}
+        aria-haspopup="true"
       >
-        <div className="relative">
-          {currentUser.photo ? (
+        <div className="w-8 rounded-full">
+          {currentUser?.photo || currentUser?.avatar ? (
             <img
-              src={currentUser.photo}
+              src={currentUser.photo || currentUser.avatar}
               alt="Profile"
-              className="w-8 h-8 rounded-full object-cover border-2 border-blue-500"
+              className="w-8 h-8 rounded-full object-cover ring ring-primary ring-offset-base-100 ring-offset-2"
             />
           ) : (
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
-              <UserIcon className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
+              <UserIcon className="w-5 h-5 text-primary-content" />
             </div>
           )}
-          <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
         </div>
-        <ChevronDownIcon
-          className={`w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform ${
-            isDropdownOpen ? "rotate-180" : ""
-          }`}
-        />
+        <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-base-100"></div>
       </motion.button>
 
-      {/* Dropdown */}
       <AnimatePresence>
         {isDropdownOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50"
-          >
-            {/* En-tête du profil */}
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center space-x-3">
-                <div className="relative">
-                  {currentUser.photo ? (
-                    <img
-                      src={currentUser.photo}
-                      alt="Profile"
-                      className="w-12 h-12 rounded-full object-cover border-2 border-blue-500"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
-                      <UserIcon className="w-6 h-6 text-white" />
+          <div>
+            {/* Overlay pour mobile */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
+              onClick={() => setIsDropdownOpen(false)}
+            />
+            {/* Menu dropdown */}
+            <motion.div
+              ref={dropdownRef}
+              initial={{ opacity: 0, scale: 0.95, y: -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="absolute right-0 mt-2 w-72 bg-base-100 rounded-lg shadow-xl border border-base-300 z-50 overflow-hidden"
+              style={{
+                maxHeight: "calc(100vh - 200px)",
+                overflowY: "auto",
+                transformOrigin: "top right",
+                right: "-1rem",
+              }}
+            >
+              {/* En-tête du profil avec informations simplifiées */}
+              <div className="p-4 border-b border-base-300 bg-gradient-to-r from-base-100 to-base-200">
+                <div className="flex items-center space-x-3">
+                  <div className="avatar">
+                    <div className="w-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                      {currentUser?.photo || currentUser?.avatar ? (
+                        <img
+                          src={currentUser.photo || currentUser.avatar}
+                          alt="Profile"
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-secondary flex items-center justify-center">
+                          <UserIcon className="w-6 h-6 text-primary-content" />
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                    {formatName(currentUser.name || currentUser.username)}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {currentUser.email || 'Email non disponible'}
-                  </p>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-base-100"></div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate text-base-content">
+                      {formatName(currentUser)}
+                    </p>
+                    <p className="text-xs opacity-70 truncate text-base-content/70">
+                      {currentUser?.email || "email@example.com"}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* Options du menu */}
-            <div className="py-2">
-              <motion.button
-                onClick={handleProfileClick}
-                className="w-full flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                whileHover={{ x: 4 }}
-              >
-                <UserIcon className="w-5 h-5 mr-3 text-gray-500" />
-                Profile
-              </motion.button>
-
-              <motion.button
-                onClick={handleSignOut}
-                className="w-full flex items-center px-4 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                whileHover={{ x: 4 }}
-              >
-                <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
-                Sign out
-              </motion.button>
-            </div>
-          </motion.div>
+              {/* Options du menu simplifiées */}
+              <div className="p-2">
+                <motion.button
+                  onClick={handleProfileClick}
+                  className="w-full flex items-center px-3 py-3 text-sm rounded-lg hover:bg-base-200 transition-colors duration-200"
+                  whileHover={{ x: 4 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <UserIcon className="w-5 h-5 mr-3 text-primary" />
+                  <span className="flex-1 text-left text-base-content">
+                    Mon Profil
+                  </span>
+                  <motion.div
+                    className="w-2 h-2 bg-primary rounded-full"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.1 }}
+                  />
+                </motion.button>
+                <div className="border-t border-base-300 my-2"></div>
+                <motion.button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center px-3 py-3 text-sm rounded-lg hover:bg-error/10 text-error transition-colors duration-200"
+                  whileHover={{ x: 4 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
+                  <span className="flex-1 text-left">Se déconnecter</span>
+                  <motion.div
+                    className="w-2 h-2 bg-error rounded-full"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                  />
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

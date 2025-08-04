@@ -1,28 +1,287 @@
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { FaArrowRight, FaNewspaper, FaPlane, FaRocket } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const Home = () => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const floatingVariants = {
+    animate: {
+      y: [0, -10, 0],
+      transition: {
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut",
+      },
+    },
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <h1 className="text-4xl font-bold text-gray-800 mb-8">
-        Bienvenue sur Doualair Blog
-      </h1>
-      <p className="text-lg text-gray-600 mb-8 text-center max-w-2xl">
-        Découvrez nos articles et actualités sur l'aéronautique et bien plus
-        encore.
-      </p>
-      <div className="flex gap-4">
-        <Link
-          to="/sign-in"
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Se connecter
-        </Link>
-        <Link
-          to="/sign-up"
-          className="px-6 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-        >
-          S'inscrire
-        </Link>
+    <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200 relative overflow-hidden">
+      {/* Background animated elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 left-10 w-32 h-32 bg-primary/10 rounded-full blur-xl"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, -50, 0],
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute top-40 right-20 w-24 h-24 bg-secondary/10 rounded-full blur-xl"
+          animate={{
+            x: [0, -80, 0],
+            y: [0, 60, 0],
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-40 left-1/4 w-20 h-20 bg-accent/10 rounded-full blur-xl"
+          animate={{
+            x: [0, 60, 0],
+            y: [0, -40, 0],
+          }}
+          transition={{
+            duration: 18,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center">
+          <motion.div
+            className="text-center max-w-4xl mx-auto"
+            variants={containerVariants}
+            initial="hidden"
+            animate={isVisible ? "visible" : "hidden"}
+          >
+            {/* Logo section */}
+            <motion.div
+              className="mb-8 md:mb-12"
+              variants={itemVariants}
+              whileHover={{
+                rotate: [0, 10, -10, 5, 0],
+                transition: { duration: 0.8 },
+              }}
+            >
+              <motion.div
+                className="relative inline-block"
+                variants={floatingVariants}
+                animate="animate"
+              >
+                <div className="relative">
+                  <img
+                    src="/dlair.svg"
+                    alt="Doualair Logo"
+                    className="w-20 h-20 md:w-28 md:h-28 mx-auto drop-shadow-2xl"
+                  />
+                  <motion.div
+                    className="absolute inset-0 bg-primary/20 rounded-full blur-xl"
+                    animate={{
+                      scale: [1, 1.2, 1],
+                      opacity: [0.3, 0.6, 0.3],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  />
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Main heading */}
+            <motion.h1
+              className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 md:mb-8"
+              variants={itemVariants}
+            >
+              <span className="block text-base-content">Bienvenue sur </span>
+              <span className="block bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                Doualair Blog
+              </span>
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              className="text-lg md:text-xl lg:text-2xl opacity-80 max-w-3xl mx-auto mb-8 md:mb-12 leading-relaxed"
+              variants={itemVariants}
+            >
+              Découvrez nos articles et actualités sur l'aéronautique et bien
+              plus encore. Votre source d'informations sur les innovations
+              technologiques du secteur aérien.
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div
+              className="flex flex-col sm:flex-row gap-4 justify-center mb-12 md:mb-16"
+              variants={itemVariants}
+            >
+              <Link to="/sign-in">
+                <motion.button
+                  className="btn btn-primary btn-lg w-full sm:w-auto group"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FaPlane className="mr-2 group-hover:rotate-12 transition-transform" />
+                  Se connecter
+                  <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                </motion.button>
+              </Link>
+              <Link to="/sign-up">
+                <motion.button
+                  className="btn btn-outline btn-lg w-full sm:w-auto group"
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <FaRocket className="mr-2 group-hover:rotate-12 transition-transform" />
+                  S'inscrire
+                  <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                </motion.button>
+              </Link>
+            </motion.div>
+
+            {/* Features Grid */}
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8"
+              variants={itemVariants}
+            >
+              {[
+                {
+                  icon: <FaPlane className="text-4xl md:text-5xl" />,
+                  title: "Aéronautique",
+                  description: "Actualités et innovations du secteur aérien",
+                  color: "text-primary",
+                  bgColor: "bg-primary/10",
+                },
+                {
+                  icon: <FaRocket className="text-4xl md:text-5xl" />,
+                  title: "Technologies",
+                  description: "Les dernières avancées technologiques",
+                  color: "text-secondary",
+                  bgColor: "bg-secondary/10",
+                },
+                {
+                  icon: <FaNewspaper className="text-4xl md:text-5xl" />,
+                  title: "Actualités",
+                  description: "Informations et analyses du secteur",
+                  color: "text-accent",
+                  bgColor: "bg-accent/10",
+                },
+              ].map((feature, index) => (
+                <motion.div
+                  key={index}
+                  className="card bg-base-100/80 backdrop-blur-sm shadow-xl border border-base-300/50 hover:shadow-2xl transition-all duration-300"
+                  whileHover={{
+                    y: -8,
+                    scale: 1.02,
+                    transition: { type: "spring", stiffness: 300 },
+                  }}
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    transition: {
+                      delay: 0.8 + index * 0.1,
+                      duration: 0.6,
+                    },
+                  }}
+                >
+                  <div className="card-body text-center p-6 md:p-8">
+                    <motion.div
+                      className={`inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 rounded-full ${feature.bgColor} ${feature.color} mb-4`}
+                      whileHover={{
+                        rotate: 360,
+                        scale: 1.1,
+                        transition: { duration: 0.6 },
+                      }}
+                    >
+                      {feature.icon}
+                    </motion.div>
+                    <h3 className="card-title justify-center text-xl md:text-2xl font-bold mb-3">
+                      {feature.title}
+                    </h3>
+                    <p className="opacity-80 text-sm md:text-base leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Scroll indicator */}
+            <motion.div
+              className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.5, duration: 0.6 }}
+            >
+              <motion.div
+                className="w-6 h-10 border-2 border-base-content/30 rounded-full flex justify-center"
+                animate={{
+                  y: [0, 10, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              >
+                <motion.div
+                  className="w-1 h-3 bg-base-content/60 rounded-full mt-2"
+                  animate={{
+                    y: [0, 12, 0],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

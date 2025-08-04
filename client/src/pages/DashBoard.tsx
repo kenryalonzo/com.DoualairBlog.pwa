@@ -1,689 +1,807 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  UserIcon,
-  ArrowRightOnRectangleIcon,
-  TrashIcon,
-  PhotoIcon,
-  LockClosedIcon,
-  Bars3Icon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import { signOutSuccess, updateUserSuccess } from "../redux/user/userSlice";
+  Camera,
+  KeyRound,
+  LogOut,
+  Palette,
+  ShieldCheck,
+  Trash2,
+  User,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { userService } from "../services/api";
+import type { RootState } from "../redux/store";
+import { signOutSuccess } from "../redux/user/userSlice";
 
-interface User {
-  _id: string;
-  username: string;
+// --- Types ---
+type User = {
+  username?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
   name?: string;
-  email: string;
   photo?: string;
-  role?: string;
-  createdAt?: string;
-}
+  profilePicture?: string | null;
+};
 
-interface RootState {
-  user: {
-    currentUser: User | null;
-  };
-}
+type ProfileSettingsProps = {
+  currentUser: User;
+  onUpdateProfile: (data: {
+    username?: string;
+    email?: string;
+    profilePicture?: string;
+  }) => void;
+};
 
-const DashBoard = () => {
-  const [activeSection, setActiveSection] = useState("profile");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [profileData, setProfileData] = useState({
-    username: "",
-    name: "",
-    email: "",
-    photo: null as File | null,
+type SecuritySettingsProps = {
+  onShowDeleteConfirm: () => void;
+  onDeleteAccount: () => void;
+  onUpdatePassword: (newPassword: string, confirmPassword: string) => void;
+};
+
+// --- Section des composants de contenu ---
+
+/**
+ * Section pour modifier les informations du profil
+ */
+const ProfileSettings = ({
+  currentUser,
+  onUpdateProfile,
+}: ProfileSettingsProps) => {
+  const filePickerRef = useRef<HTMLInputElement>(null);
+  const [formData, setFormData] = useState({
+    username: currentUser?.username || "",
+    email: currentUser?.email || "",
+    profilePicture: currentUser?.profilePicture || undefined,
   });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setFormData((prev) => ({ ...prev, profilePicture: result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveProfile = async () => {
+    if (!formData.username.trim() || !formData.email.trim()) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await onUpdateProfile(formData);
+      toast.success("Profil mis à jour avec succès !");
+    } catch (error) {
+      toast.error("Erreur lors de la mise à jour du profil");
+      console.error("Erreur lors de la mise à jour du profil:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      key="profile"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      {/* Carte pour la photo de profil */}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h3 className="card-title">
+            <Camera className="w-5 h-5" />
+            Photo de profil
+          </h3>
+          <p className="text-base-content/70">
+            Mettez à jour votre photo de profil.
+          </p>
+
+          <div className="flex items-center gap-6 mt-4">
+            <div className="avatar">
+              <div className="w-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                <img
+                  src={
+                    formData.profilePicture ||
+                    `https://placehold.co/80x80/E2E8F0/475569?text=${currentUser?.username
+                      ?.charAt(0)
+                      .toUpperCase()}`
+                  }
+                  alt="Photo de profil"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = `https://placehold.co/80x80/E2E8F0/475569?text=${currentUser?.username
+                      ?.charAt(0)
+                      .toUpperCase()}`;
+                  }}
+                />
+              </div>
+            </div>
+
+            <input
+              type="file"
+              ref={filePickerRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+            <button
+              onClick={() => filePickerRef.current?.click()}
+              className="btn btn-outline"
+            >
+              Changer la photo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Carte pour les informations personnelles */}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h3 className="card-title">
+            <User className="w-5 h-5" />
+            Informations personnelles
+          </h3>
+          <p className="text-base-content/70">
+            Modifiez votre nom d'utilisateur et votre adresse e-mail.
+          </p>
+
+          <div className="form-control w-full mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="label">
+                  <span className="label-text">Nom d'utilisateur</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) =>
+                    handleInputChange("username", e.target.value)
+                  }
+                  className="input input-bordered w-full"
+                />
+              </div>
+              <div>
+                <label className="label">
+                  <span className="label-text">Adresse e-mail</span>
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  className="input input-bordered w-full"
+                />
+              </div>
+            </div>
+
+            <div className="card-actions justify-end mt-6">
+              <button
+                onClick={handleSaveProfile}
+                disabled={isLoading}
+                className="btn btn-primary"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Enregistrement...
+                  </>
+                ) : (
+                  "Enregistrer les modifications"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+/**
+ * Section pour la sécurité du compte
+ */
+const SecuritySettings = ({
+  onShowDeleteConfirm,
+  onUpdatePassword,
+}: SecuritySettingsProps) => {
   const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-  const [deletePassword, setDeletePassword] = useState("");
-  const { currentUser } = useSelector((state: RootState) => state.user);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handlePasswordChange = (field: string, value: string) => {
+    setPasswordData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleUpdatePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("Les mots de passe ne correspondent pas");
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await onUpdatePassword(
+        passwordData.newPassword,
+        passwordData.confirmPassword
+      );
+      setPasswordData({ newPassword: "", confirmPassword: "" });
+      toast.success("Mot de passe mis à jour avec succès !");
+    } catch (error) {
+      toast.error("Erreur lors de la mise à jour du mot de passe");
+      console.error("Erreur lors de la mise à jour du mot de passe:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      key="security"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      {/* Carte pour le mot de passe */}
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h3 className="card-title">
+            <KeyRound className="w-5 h-5" />
+            Mot de passe
+          </h3>
+          <p className="text-base-content/70">
+            Changez votre mot de passe régulièrement pour sécuriser votre
+            compte.
+          </p>
+
+          <div className="form-control w-full mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="label">
+                  <span className="label-text">Nouveau mot de passe</span>
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) =>
+                    handlePasswordChange("newPassword", e.target.value)
+                  }
+                  placeholder="••••••••"
+                  className="input input-bordered w-full"
+                />
+              </div>
+              <div>
+                <label className="label">
+                  <span className="label-text">Confirmer le mot de passe</span>
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) =>
+                    handlePasswordChange("confirmPassword", e.target.value)
+                  }
+                  placeholder="••••••••"
+                  className="input input-bordered w-full"
+                />
+              </div>
+            </div>
+
+            <div className="card-actions justify-end mt-6">
+              <button
+                onClick={handleUpdatePassword}
+                disabled={
+                  isLoading ||
+                  !passwordData.newPassword ||
+                  !passwordData.confirmPassword
+                }
+                className="btn btn-primary"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Mise à jour...
+                  </>
+                ) : (
+                  "Changer le mot de passe"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Zone de danger */}
+      <div className="card bg-error/10 border-error/20 shadow-xl">
+        <div className="card-body">
+          <h3 className="card-title text-error">
+            <Trash2 className="w-5 h-5" />
+            Zone de danger
+          </h3>
+          <p className="text-error/80">
+            La suppression de votre compte est une action irréversible. Toutes
+            vos données, y compris vos articles et commentaires, seront
+            définitivement effacées.
+          </p>
+
+          <div className="card-actions justify-end">
+            <button onClick={onShowDeleteConfirm} className="btn btn-error">
+              Supprimer mon compte
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// --- Composant principal du tableau de bord ---
+
+const DashBoard = () => {
+  // --- États ---
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // --- Hooks Redux et Router ---
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { currentUser } = useSelector((state: RootState) => state.user);
 
-  // Initialiser les données du profil
-  useEffect(() => {
-    if (currentUser) {
-      setProfileData({
-        username: currentUser.username || "",
-        name: currentUser.name || "",
-        email: currentUser.email || "",
-        photo: null,
-      });
-    }
-  }, [currentUser]);
-
-  // Rediriger si pas connecté
-  if (!currentUser) {
-    navigate("/sign-in");
-    return null;
-  }
-
-  // Fonction pour gérer le changement de photo
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setProfileData({ ...profileData, photo: e.target.files[0] });
-    }
+  // Gérer le cas où currentUser peut être null
+  const user = currentUser || {
+    username: "Utilisateur",
+    email: "user@example.com",
+    profilePicture: null,
   };
 
-  // Fonction pour mettre à jour le profil
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  console.log("[Dashboard] Current user:", currentUser);
+  console.log("[Dashboard] User object:", user);
 
-    try {
-      const formData = new FormData();
-      formData.append("username", profileData.username);
-      formData.append("name", profileData.name);
-      formData.append("email", profileData.email);
-      if (profileData.photo) {
-        formData.append("photo", profileData.photo);
-      }
+  // --- Gestion du routage ---
+  const currentSection = searchParams.get("section") || "profile";
 
-      const response = await userService.updateProfile(formData);
-      dispatch(updateUserSuccess(response.user));
-      toast.success("Profil mis à jour avec succès !", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Erreur lors de la mise à jour du profil",
-        {
-          position: "top-right",
-          autoClose: 3000,
-        }
-      );
-    } finally {
-      setLoading(false);
+  // Déterminer l'onglet actif basé sur l'URL
+  const getActiveTab = () => {
+    if (currentSection === "security") {
+      return "security";
     }
+    return "profile";
   };
 
-  // Fonction pour mettre à jour le mot de passe
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const activeTab = getActiveTab();
 
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      return;
+  // Fonction pour naviguer vers une section
+  const navigateToSection = (section: string, action?: string) => {
+    const params = new URLSearchParams();
+    params.set("section", section);
+    if (action) {
+      params.set("action", action);
     }
-
-    if (
-      passwordData.newPassword.length < 8 ||
-      !/^(?=.*[A-Za-z])(?=.*\d)/.test(passwordData.newPassword)
-    ) {
-      toast.error(
-        "Le mot de passe doit contenir au moins 8 caractères, dont une lettre et un chiffre",
-        {
-          position: "top-right",
-          autoClose: 3000,
-        }
-      );
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      await userService.updatePassword({
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-      });
-
-      setPasswordData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-
-      toast.success("Mot de passe mis à jour avec succès !", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Erreur lors de la mise à jour du mot de passe",
-        {
-          position: "top-right",
-          autoClose: 3000,
-        }
-      );
-    } finally {
-      setLoading(false);
-    }
+    setSearchParams(params);
   };
 
-  // Fonction pour supprimer le compte
-  const handleDeleteAccount = async () => {
-    if (!deletePassword) {
-      toast.error("Veuillez entrer votre mot de passe", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      return;
-    }
-
-    if (
-      !confirm(
-        "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible."
-      )
-    ) {
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      await userService.deleteAccount(deletePassword);
-      dispatch(signOutSuccess());
-      toast.success("Compte supprimé avec succès", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      navigate("/");
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Erreur lors de la suppression du compte",
-        {
-          position: "top-right",
-          autoClose: 3000,
-        }
-      );
-    } finally {
-      setLoading(false);
-      setDeletePassword("");
-    }
-  };
-
-  // Fonction pour gérer la déconnexion
+  // --- Gestionnaires d'événements ---
   const handleSignOut = async () => {
     try {
-      const apiUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-      const res = await fetch(`${apiUrl}/auth/signout`, {
+      const response = await fetch("/api/auth/signout", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
       });
 
-      if (res.ok) {
+      if (response.ok) {
         dispatch(signOutSuccess());
         toast.success("Déconnexion réussie !", {
           position: "top-right",
-          autoClose: 2000,
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
         });
-        navigate("/");
+        // Délai pour permettre au toast de s'afficher
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
       } else {
         toast.error("Erreur lors de la déconnexion", {
           position: "top-right",
           autoClose: 3000,
         });
+        console.error("Erreur lors de la déconnexion:", response.status);
       }
     } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
       toast.error("Erreur lors de la déconnexion", {
         position: "top-right",
         autoClose: 3000,
       });
+      // Même en cas d'erreur, on déconnecte localement
+      dispatch(signOutSuccess());
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
     }
   };
 
-  const formatName = (name: string | undefined | null) => {
-    if (!name || typeof name !== "string") {
-      return "Utilisateur";
+  const handleDeleteAccount = async () => {
+    try {
+      const response = await fetch("/api/user/profile", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Erreur lors de la suppression du compte"
+        );
+      }
+
+      console.log("Compte supprimé avec succès");
+      setShowDeleteConfirm(false);
+      toast.success("Compte supprimé avec succès");
+      dispatch(signOutSuccess());
+      navigate("/");
+    } catch (error) {
+      toast.error("Erreur lors de la suppression du compte");
+      console.error("Erreur lors de la suppression du compte:", error);
     }
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
   };
 
-  const sidebarItems = [
+  const handleUpdateProfile = async (data: {
+    username?: string;
+    email?: string;
+    profilePicture?: string;
+  }) => {
+    try {
+      const response = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Erreur lors de la mise à jour du profil"
+        );
+      }
+
+      const result = await response.json();
+      console.log("Profil mis à jour:", result);
+
+      // Mettre à jour le state Redux si nécessaire
+      // dispatch(updateUserProfile(result));
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du profil:", error);
+      throw error;
+    }
+  };
+
+  const handleUpdatePassword = async (
+    newPassword: string,
+    confirmPassword: string
+  ) => {
+    // Validation côté frontend
+    if (newPassword !== confirmPassword) {
+      throw new Error("Les mots de passe ne correspondent pas");
+    }
+
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          currentPassword: "", // L'utilisateur devra fournir l'ancien mot de passe
+          newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || "Erreur lors du changement de mot de passe"
+        );
+      }
+
+      const result = await response.json();
+      console.log("Mot de passe mis à jour avec succès:", result);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du mot de passe:", error);
+      throw error;
+    }
+  };
+
+  // Fermer la sidebar en cliquant à l'extérieur
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // --- Éléments de menu ---
+  const menuItems = [
     {
       id: "profile",
-      name: "Modifier le profil",
-      icon: UserIcon,
-      description: "Nom, email et photo de profil",
+      name: "Modifier mon compte",
+      icon: User,
+      url: "profile",
     },
     {
       id: "security",
       name: "Sécurité",
-      icon: LockClosedIcon,
-      description: "Mot de passe et suppression du compte",
-    },
-    {
-      id: "signout",
-      name: "Se déconnecter",
-      icon: ArrowRightOnRectangleIcon,
-      description: "Quitter votre session",
+      icon: ShieldCheck,
+      url: "security",
     },
   ];
 
+  // --- Rendu du contenu dynamique ---
   const renderContent = () => {
-    switch (activeSection) {
+    switch (activeTab) {
       case "profile":
         return (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6"
-          >
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Modifier le profil
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Gérez vos informations personnelles
-              </p>
-            </div>
-
-            <div className="bg-white/10 dark:bg-gray-800/10 backdrop-blur-lg rounded-xl shadow-sm border border-gray-200/20 dark:border-gray-700/20 p-6">
-              <form onSubmit={handleUpdateProfile} className="space-y-6">
-                {/* Photo de profil */}
-                <div className="flex items-center space-x-6">
-                  <div className="relative">
-                    {profileData.photo ? (
-                      <img
-                        src={URL.createObjectURL(profileData.photo)}
-                        alt="Profile Preview"
-                        className="w-20 h-20 rounded-full object-cover border-4 border-blue-500"
-                      />
-                    ) : currentUser.photo ? (
-                      <img
-                        src={currentUser.photo}
-                        alt="Profile"
-                        className="w-20 h-20 rounded-full object-cover border-4 border-blue-500"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
-                        <UserIcon className="w-10 h-10 text-white" />
-                      </div>
-                    )}
-                    <label className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors cursor-pointer">
-                      <PhotoIcon className="w-4 h-4" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                      Photo de profil
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Cliquez sur l'icône pour changer votre photo
-                    </p>
-                  </div>
-                </div>
-
-                {/* Informations personnelles */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Nom complet
-                    </label>
-                    <input
-                      type="text"
-                      value={profileData.name}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          name: e.target.value.trimStart(),
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300/20 dark:border-gray-600/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/20 dark:bg-gray-700/20 text-gray-900 dark:text-white backdrop-blur-sm"
-                      placeholder="Votre nom"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Nom d'utilisateur
-                    </label>
-                    <input
-                      type="text"
-                      value={profileData.username}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          username: e.target.value.trimStart(),
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300/20 dark:border-gray-600/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/20 dark:bg-gray-700/20 text-gray-900 dark:text-white backdrop-blur-sm"
-                      placeholder="Votre nom d'utilisateur"
-                      minLength={3}
-                      required
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      value={profileData.email}
-                      onChange={(e) =>
-                        setProfileData({
-                          ...profileData,
-                          email: e.target.value.trimStart(),
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300/20 dark:border-gray-600/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/20 dark:bg-gray-700/20 text-gray-900 dark:text-white backdrop-blur-sm"
-                      placeholder="Votre email"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <motion.button
-                    type="submit"
-                    disabled={
-                      loading || !profileData.username || !profileData.email
-                    }
-                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg hover:from-blue-700 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {loading ? (
-                      <>
-                        <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin"></div>
-                        <span>Sauvegarde...</span>
-                      </>
-                    ) : (
-                      <span>Sauvegarder les modifications</span>
-                    )}
-                  </motion.button>
-                </div>
-              </form>
-            </div>
-          </motion.div>
+          <ProfileSettings
+            currentUser={user}
+            onUpdateProfile={handleUpdateProfile}
+          />
         );
-
       case "security":
         return (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6"
-          >
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Sécurité
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">
-                Gérez votre mot de passe et paramètres de sécurité
-              </p>
-            </div>
-
-            <div className="bg-white/10 dark:bg-gray-800/10 backdrop-blur-lg rounded-xl shadow-sm border border-gray-200/20 dark:border-gray-700/20 p-6">
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                    Changer le mot de passe
-                  </h3>
-                  <form onSubmit={handleUpdatePassword} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Mot de passe actuel
-                      </label>
-                      <input
-                        type="password"
-                        value={passwordData.currentPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            currentPassword: e.target.value.trimStart(),
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300/20 dark:border-gray-600/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/20 dark:bg-gray-700/20 text-gray-900 dark:text-white backdrop-blur-sm"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Nouveau mot de passe
-                      </label>
-                      <input
-                        type="password"
-                        value={passwordData.newPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            newPassword: e.target.value.trimStart(),
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300/20 dark:border-gray-600/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/20 dark:bg-gray-700/20 text-gray-900 dark:text-white backdrop-blur-sm"
-                        required
-                        minLength={8}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Confirmer le nouveau mot de passe
-                      </label>
-                      <input
-                        type="password"
-                        value={passwordData.confirmPassword}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            confirmPassword: e.target.value.trimStart(),
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300/20 dark:border-gray-600/20 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/20 dark:bg-gray-700/20 text-gray-900 dark:text-white backdrop-blur-sm"
-                        required
-                        minLength={8}
-                      />
-                    </div>
-                    <div className="flex justify-end">
-                      <motion.button
-                        type="submit"
-                        disabled={
-                          loading ||
-                          !passwordData.currentPassword ||
-                          !passwordData.newPassword ||
-                          !passwordData.confirmPassword
-                        }
-                        className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-lg hover:from-blue-700 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {loading ? (
-                          <>
-                            <div className="w-4 h-4 border-t-2 border-white rounded-full animate-spin"></div>
-                            <span>Mise à jour...</span>
-                          </>
-                        ) : (
-                          <span>Mettre à jour le mot de passe</span>
-                        )}
-                      </motion.button>
-                    </div>
-                  </form>
-                </div>
-
-                <hr className="border-gray-200/20 dark:border-gray-700/20" />
-
-                <div>
-                  <h3 className="text-lg font-medium text-red-600 dark:text-red-400 mb-4">
-                    Supprimer le compte
-                  </h3>
-                  <div className="bg-red-50/10 dark:bg-red-900/10 border border-red-200/20 dark:border-red-800/20 rounded-lg p-4">
-                    <div className="space-y-4">
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        Cette action est irréversible. Toutes vos données seront
-                        supprimées.
-                      </p>
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="password"
-                          placeholder="Entrez votre mot de passe"
-                          value={deletePassword}
-                          onChange={(e) =>
-                            setDeletePassword(e.target.value.trimStart())
-                          }
-                          className="flex-1 px-3 py-2 border border-red-300/20 dark:border-red-600/20 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white/20 dark:bg-gray-700/20 text-gray-900 dark:text-white backdrop-blur-sm text-sm"
-                        />
-                        <motion.button
-                          onClick={handleDeleteAccount}
-                          disabled={loading || !deletePassword}
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <TrashIcon className="w-4 h-4" />
-                          <span>
-                            {loading ? "Suppression..." : "Supprimer"}
-                          </span>
-                        </motion.button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+          <SecuritySettings
+            onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
+            onDeleteAccount={handleDeleteAccount}
+            onUpdatePassword={handleUpdatePassword}
+          />
         );
-
-      case "signout":
-        handleSignOut();
-        return null;
-
       default:
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 dark:from-gray-900 dark:to-blue-900 flex">
-      {/* Sidebar mobile overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 lg:hidden bg-gray-600/75"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Sidebar */}
-      <motion.div
-        initial={false}
-        animate={{
-          x: sidebarOpen ? 0 : "-100%",
-        }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="fixed inset-y-0 left-0 z-50 w-64 bg-white/10 dark:bg-gray-800/10 backdrop-blur-lg shadow-lg lg:relative lg:translate-x-0 lg:flex-shrink-0"
-      >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200/20 dark:border-gray-700/20">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-            Doualair Dashboard
-          </h1>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100/20 dark:hover:bg-gray-700/20"
-          >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
-
-        <nav className="mt-6 px-3">
-          <div className="space-y-2">
-            {sidebarItems.map((item) => (
-              <motion.button
-                key={item.id}
-                onClick={() => {
-                  setActiveSection(item.id);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  activeSection === item.id
-                    ? "bg-blue-100/20 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100/20 dark:hover:bg-gray-700/20"
-                }`}
-                whileHover={{ x: 5 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                <div className="text-left min-w-0">
-                  <div className="truncate">{item.name}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {item.description}
-                  </div>
-                </div>
-              </motion.button>
-            ))}
-          </div>
-        </nav>
-      </motion.div>
-
-      {/* Main content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top bar */}
-        <div className="sticky top-0 z-10 bg-white/10 dark:bg-gray-800/10 backdrop-blur-lg border-b border-gray-200/20 dark:border-gray-700/20">
-          <div className="flex items-center justify-between h-16 px-6">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100/20 dark:hover:bg-gray-700/20"
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                {currentUser.photo ? (
-                  <img
-                    src={currentUser.photo}
-                    alt="Profile"
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
-                    <UserIcon className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {formatName(currentUser.name || currentUser.username)}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {currentUser.email}
-                  </p>
+    <div className="min-h-screen bg-base-200 text-base-content">
+      {/* Layout principal */}
+      <div className="flex">
+        {/* Sidebar (Desktop) */}
+        <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
+          <div className="fixed left-0 top-0 h-full w-64 bg-base-100 shadow-xl border-r border-base-300 flex flex-col z-50">
+            {/* Logo */}
+            <div className="navbar bg-base-100 border-b border-base-300">
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <Palette className="w-6 h-6 text-primary" />
+                  <h1 className="text-xl font-bold">Mon Dashboard</h1>
                 </div>
               </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex-1 p-4">
+              <ul className="menu menu-lg bg-base-100 w-full">
+                {menuItems.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => navigateToSection(item.url)}
+                      className={`${activeTab === item.id ? "active" : ""}`}
+                    >
+                      <item.icon className="w-5 h-5" />
+                      {item.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Section Déconnexion */}
+            <div className="p-4 border-t border-base-300">
+              <button
+                onClick={handleSignOut}
+                className="btn btn-outline w-full"
+              >
+                <LogOut className="w-5 h-5" />
+                Se déconnecter
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Page content */}
-        <main className="flex-1 p-6">
-          <div className="max-w-4xl mx-auto">{renderContent()}</div>
+        {/* Header Mobile */}
+        <div className="lg:hidden navbar bg-base-100 shadow-lg sticky top-0 z-40">
+          <div className="navbar-start">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="btn btn-ghost btn-square"
+            >
+              <Bars3Icon className="w-6 h-6" />
+            </button>
+          </div>
+          <div className="navbar-center">
+            <h1 className="text-lg font-semibold">
+              {menuItems.find((item) => item.id === activeTab)?.name}
+            </h1>
+          </div>
+          <div className="navbar-end">
+            <div className="w-8"></div>
+          </div>
+        </div>
+
+        {/* Sidebar (Mobile) */}
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 lg:hidden"
+                onClick={() => setIsSidebarOpen(false)}
+              />
+              <motion.div
+                ref={sidebarRef}
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="fixed left-0 top-0 h-full w-64 bg-base-100 shadow-xl z-50 lg:hidden flex flex-col"
+              >
+                <div className="navbar bg-base-100 border-b border-base-300">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <Palette className="w-6 h-6 text-primary" />
+                      <h1 className="text-xl font-bold">Dashboard</h1>
+                    </div>
+                  </div>
+                  <div className="flex-none">
+                    <button
+                      onClick={() => setIsSidebarOpen(false)}
+                      className="btn btn-ghost btn-square"
+                    >
+                      <XMarkIcon className="w-6 h-6" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 p-4">
+                  <ul className="menu menu-lg bg-base-100 w-full">
+                    {menuItems.map((item) => (
+                      <li key={item.id}>
+                        <button
+                          onClick={() => {
+                            navigateToSection(item.url);
+                            setIsSidebarOpen(false);
+                          }}
+                          className={`${activeTab === item.id ? "active" : ""}`}
+                        >
+                          <item.icon className="w-5 h-5" />
+                          {item.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="p-4 border-t border-base-300">
+                  <button
+                    onClick={handleSignOut}
+                    className="btn btn-outline w-full"
+                  >
+                    <LogOut className="w-5 h-5" />
+                    Se déconnecter
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Contenu Principal */}
+        <main className="flex-1 lg:ml-64">
+          <div className="p-6 lg:p-10">
+            <div className="max-w-6xl mx-auto lg:mr-0 lg:ml-auto lg:pr-8">
+              {/* Header du contenu */}
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold">
+                  {menuItems.find((item) => item.id === activeTab)?.name}
+                </h2>
+                <p className="text-base-content/70 mt-2">
+                  Gérez les paramètres de votre compte ici.
+                </p>
+              </div>
+
+              {/* Contenu dynamique */}
+              <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
+            </div>
+          </div>
         </main>
       </div>
+
+      {/* Modal de confirmation de suppression */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="modal-box max-w-md"
+            >
+              <div className="text-center">
+                <div className="mx-auto w-12 h-12 rounded-full bg-error/20 flex items-center justify-center mb-4">
+                  <Trash2 className="w-6 h-6 text-error" />
+                </div>
+                <h3 className="text-lg font-semibold">Supprimer le compte</h3>
+                <p className="text-base-content/70 mt-2">
+                  Êtes-vous sûr de vouloir supprimer votre compte ? Cette action
+                  est définitive et irréversible.
+                </p>
+              </div>
+
+              <div className="modal-action">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="btn btn-ghost"
+                >
+                  Annuler
+                </button>
+                <button onClick={handleDeleteAccount} className="btn btn-error">
+                  Oui, supprimer
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -1,14 +1,14 @@
-import { GoogleAuthProvider, signInWithPopup, getAuth } from "firebase/auth";
-import { app } from "../firebase";
-import { toast } from "react-toastify";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { FcGoogle } from "react-icons/fc";
 import { useDispatch } from "react-redux";
-import {
-  signInSuccess,
-  signInStart,
-  signInFailure,
-} from "../redux/user/userSlice";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { app } from "../firebase";
+import {
+  signInFailure,
+  signInStart,
+  signInSuccess,
+} from "../redux/user/userSlice";
 import { authService } from "../services/api";
 
 export default function OAuth() {
@@ -38,7 +38,7 @@ export default function OAuth() {
       console.log("[OAuth] Backend response:", data);
 
       // Dispatch to Redux store with correct data structure
-      dispatch(signInSuccess(data.user || data));
+      dispatch(signInSuccess(data.data?.user || data.user || data));
       toast.success("Connexion Google réussie !", {
         position: "top-right",
         autoClose: 2000,
@@ -93,7 +93,7 @@ export default function OAuth() {
       const data = await authService.googleAuth(mockUserData);
       console.log("[OAuth] Fallback backend response:", data);
 
-      dispatch(signInSuccess(data.user || data));
+      dispatch(signInSuccess(data.data?.user || data.user || data));
       toast.success("Connexion de test réussie !", {
         position: "top-right",
         autoClose: 3000,
@@ -118,20 +118,11 @@ export default function OAuth() {
     <div className="space-y-3">
       <button
         type="button"
-        className="w-full flex items-center justify-center py-3.5 px-6 rounded-lg border-2 border-gray-200/20 bg-white/10 text-gray-300 font-medium hover:bg-white/20 transition-all duration-200 backdrop-blur-sm"
+        className="btn btn-outline w-full"
         onClick={handleGoogleClick}
       >
         <FcGoogle className="w-5 h-5 mr-3" />
         <span>Continuer avec Google</span>
-      </button>
-
-      {/* Test button for network issues */}
-      <button
-        type="button"
-        className="w-full flex items-center justify-center py-2 px-4 rounded-lg border border-orange-500/30 bg-orange-500/10 text-orange-300 text-sm font-medium hover:bg-orange-500/20 transition-all duration-200"
-        onClick={handleFallbackAuth}
-      >
-        🔧 Test (si problème réseau)
       </button>
     </div>
   );

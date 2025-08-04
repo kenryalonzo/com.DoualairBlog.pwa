@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { setTheme, DAISYUI_THEMES } from "../redux/theme/themeSlice";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import type { DaisyUITheme } from "../redux/theme/themeSlice";
+import { DAISYUI_THEMES, setTheme } from "../redux/theme/themeSlice";
 
 interface RootState {
   theme: {
@@ -74,17 +74,19 @@ const ThemeDropdown = () => {
     <div className="relative" ref={dropdownRef}>
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-base-200 hover:bg-base-300 transition-colors"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-base-200 hover:bg-base-300 transition-all duration-200 border border-base-300 hover:border-primary/30"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
       >
-        <div className="w-4 h-4 rounded-full bg-primary"></div>
-        <span className="text-sm font-medium">{themeNames[currentTheme]}</span>
+        <div className="w-4 h-4 rounded-full bg-primary shadow-sm"></div>
+        <span className="text-sm font-medium text-base-content">
+          {themeNames[currentTheme]}
+        </span>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDownIcon className="w-4 h-4" />
+          <ChevronDownIcon className="w-4 h-4 text-base-content" />
         </motion.div>
       </motion.button>
 
@@ -95,7 +97,7 @@ const ThemeDropdown = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute top-full left-0 mt-2 w-64 bg-base-100 border border-base-300 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto"
+            className="absolute top-full left-0 mt-2 w-64 bg-base-100 border border-base-300 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto backdrop-blur-sm"
           >
             <div className="p-2">
               <div className="grid grid-cols-1 gap-1">
@@ -103,10 +105,10 @@ const ThemeDropdown = () => {
                   <motion.button
                     key={theme}
                     onClick={() => handleThemeChange(theme)}
-                    className={`flex items-center space-x-3 w-full px-3 py-2 rounded-md text-left transition-colors ${
+                    className={`flex items-center space-x-3 w-full px-3 py-2 rounded-md text-left transition-all duration-200 ${
                       currentTheme === theme
-                        ? "bg-primary text-primary-content"
-                        : "hover:bg-base-200"
+                        ? "bg-primary text-primary-content shadow-sm"
+                        : "hover:bg-base-200 hover:shadow-sm"
                     }`}
                     whileHover={{ x: 5 }}
                     whileTap={{ scale: 0.98 }}

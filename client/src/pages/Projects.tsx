@@ -1,4 +1,14 @@
 import { motion } from "framer-motion";
+import {
+  FaPlane,
+  FaRocket,
+  FaLeaf,
+  FaHistory,
+  FaGraduationCap,
+  FaCog,
+  FaNewspaper,
+  FaEnvelope,
+} from "react-icons/fa";
 
 const Projects = () => {
   const projects = [
@@ -8,7 +18,7 @@ const Projects = () => {
       description:
         "Une étude approfondie des innovations technologiques et des tendances émergentes dans l'industrie aéronautique.",
       category: "Recherche",
-      image: "/logo.png",
+      icon: <FaPlane className="text-2xl" />,
       date: "2024-01-15",
     },
     {
@@ -17,7 +27,7 @@ const Projects = () => {
       description:
         "Un guide complet sur les meilleures pratiques de sécurité dans l'aviation civile et commerciale.",
       category: "Sécurité",
-      image: "/logo.png",
+      icon: <FaRocket className="text-2xl" />,
       date: "2024-01-10",
     },
     {
@@ -26,7 +36,7 @@ const Projects = () => {
       description:
         "Exploration des solutions durables et des technologies respectueuses de l'environnement dans l'aviation.",
       category: "Développement durable",
-      image: "/logo.png",
+      icon: <FaLeaf className="text-2xl" />,
       date: "2024-01-05",
     },
     {
@@ -35,7 +45,7 @@ const Projects = () => {
       description:
         "Un voyage à travers l'histoire fascinante de l'aviation militaire et ses évolutions technologiques.",
       category: "Histoire",
-      image: "/logo.png",
+      icon: <FaHistory className="text-2xl" />,
       date: "2023-12-28",
     },
     {
@@ -44,7 +54,7 @@ const Projects = () => {
       description:
         "Analyse des simulateurs de vol les plus avancés et leur rôle dans la formation des pilotes.",
       category: "Formation",
-      image: "/logo.png",
+      icon: <FaGraduationCap className="text-2xl" />,
       date: "2023-12-20",
     },
     {
@@ -53,9 +63,19 @@ const Projects = () => {
       description:
         "Impact des drones sur l'aviation civile et les nouveaux défis réglementaires.",
       category: "Technologie",
-      image: "/logo.png",
+      icon: <FaCog className="text-2xl" />,
       date: "2023-12-15",
     },
+  ];
+
+  const categories = [
+    { name: "Tous", icon: <FaNewspaper /> },
+    { name: "Recherche", icon: <FaPlane /> },
+    { name: "Sécurité", icon: <FaRocket /> },
+    { name: "Développement durable", icon: <FaLeaf /> },
+    { name: "Histoire", icon: <FaHistory /> },
+    { name: "Formation", icon: <FaGraduationCap /> },
+    { name: "Technologie", icon: <FaCog /> },
   ];
 
   const containerVariants = {
@@ -80,116 +100,119 @@ const Projects = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* En-tête */}
-      <div className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <motion.h1
-            className="text-3xl font-bold text-gray-900 dark:text-white"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            Nos Projets et Articles
-          </motion.h1>
-          <motion.p
-            className="mt-2 text-gray-600 dark:text-gray-300"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            Découvrez nos derniers articles et projets sur l'aéronautique
-          </motion.p>
+    <div className="min-h-screen bg-base-200">
+      {/* Hero Section */}
+      <motion.div
+        className="hero bg-base-100 py-16"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="hero-content text-center">
+          <div className="max-w-2xl">
+            <h1 className="text-5xl font-bold mb-6">
+              Nos{" "}
+              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                Projets et Articles
+              </span>
+            </h1>
+            <p className="text-lg opacity-70 mb-8">
+              Découvrez nos derniers articles et projets sur l'aéronautique
+            </p>
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Contenu principal */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-4 py-12">
+        {/* Grille des projets */}
         <motion.div
-          className="px-4 py-6 sm:px-0"
+          className="mb-12"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {projects.map((project) => (
               <motion.div
                 key={project.id}
                 variants={itemVariants}
-                className="bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
-                whileHover={{ y: -5 }}
+                className="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300"
+                whileHover={{ y: -5, scale: 1.02 }}
               >
-                <div className="h-48 bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="h-16 w-16 object-contain"
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="badge badge-primary badge-outline">
                       {project.category}
-                    </span>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                    </div>
+                    <span className="text-sm opacity-60">
                       {new Date(project.date).toLocaleDateString("fr-FR")}
                     </span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    {project.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+
+                  <div className="text-primary mb-4">{project.icon}</div>
+
+                  <h3 className="card-title text-lg mb-3">{project.title}</h3>
+                  <p className="opacity-70 text-sm leading-relaxed mb-4">
                     {project.description}
                   </p>
-                  <div className="mt-4">
-                    <button className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-sm transition-colors">
+
+                  <div className="card-actions justify-end">
+                    <motion.button
+                      className="btn btn-primary btn-sm"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
                       Lire la suite →
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
               </motion.div>
             ))}
           </div>
+        </motion.div>
 
-          {/* Section de filtres */}
-          <motion.div
-            className="mt-12 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-          >
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+        {/* Section de filtres */}
+        <motion.div
+          className="card bg-base-100 shadow-xl mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+        >
+          <div className="card-body">
+            <h2 className="card-title text-xl mb-6">
+              <FaNewspaper className="text-primary mr-2" />
               Filtrer par catégorie
             </h2>
-            <div className="flex flex-wrap gap-2">
-              {[
-                "Tous",
-                "Recherche",
-                "Sécurité",
-                "Développement durable",
-                "Histoire",
-                "Formation",
-                "Technologie",
-              ].map((category) => (
-                <button
-                  key={category}
-                  className="px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 hover:bg-blue-100 hover:text-blue-800 dark:hover:bg-blue-900 dark:hover:text-blue-200 transition-colors"
+            <div className="flex flex-wrap gap-3">
+              {categories.map((category) => (
+                <motion.button
+                  key={category.name}
+                  className="btn btn-outline btn-sm"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
-                  {category}
-                </button>
+                  <span className="mr-2">{category.icon}</span>
+                  {category.name}
+                </motion.button>
               ))}
             </div>
-          </motion.div>
+          </div>
+        </motion.div>
 
-          {/* Newsletter */}
-          <motion.div
-            className="mt-12 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-lg p-8 text-center text-white"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
-          >
-            <h2 className="text-2xl font-bold mb-4">Restez informé</h2>
-            <p className="mb-6 text-blue-100">
+        {/* Newsletter */}
+        <motion.div
+          className="card bg-gradient-to-r from-primary/10 to-secondary/10 shadow-xl"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+        >
+          <div className="card-body text-center">
+            <h2 className="card-title text-2xl justify-center mb-4">
+              <FaEnvelope className="text-primary mr-2" />
+              Restez informé
+            </h2>
+            <p className="opacity-70 mb-6">
               Recevez nos derniers articles et actualités directement dans votre
               boîte mail.
             </p>
@@ -197,13 +220,17 @@ const Projects = () => {
               <input
                 type="email"
                 placeholder="Votre adresse email"
-                className="flex-1 px-4 py-2 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white"
+                className="input input-bordered flex-1"
               />
-              <button className="px-6 py-2 bg-white text-blue-600 font-medium rounded-lg hover:bg-gray-100 transition-colors">
+              <motion.button
+                className="btn btn-primary"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 S'abonner
-              </button>
+              </motion.button>
             </div>
-          </motion.div>
+          </div>
         </motion.div>
       </main>
     </div>

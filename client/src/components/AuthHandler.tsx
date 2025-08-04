@@ -1,10 +1,10 @@
+import { getAuth, getRedirectResult } from "firebase/auth";
 import { useEffect } from "react";
-import { getRedirectResult, getAuth } from "firebase/auth";
-import { app } from "../firebase";
 import { useDispatch } from "react-redux";
-import { signInSuccess } from "../redux/user/userSlice";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { app } from "../firebase";
+import { signInSuccess } from "../redux/user/userSlice";
 
 export default function AuthHandler() {
   const dispatch = useDispatch();
@@ -39,7 +39,18 @@ export default function AuthHandler() {
           console.log("[AuthHandler] Backend response:", data);
 
           if (res.ok) {
-            dispatch(signInSuccess(data.user || data));
+            const userData = data.user || data;
+            console.log("[AuthHandler] Full backend response:", data);
+            console.log("[AuthHandler] User data to dispatch:", userData);
+            console.log(
+              "[AuthHandler] User data keys:",
+              userData ? Object.keys(userData) : "null"
+            );
+            console.log("[AuthHandler] User email:", userData.email);
+            console.log("[AuthHandler] User firstName:", userData.firstName);
+            console.log("[AuthHandler] User lastName:", userData.lastName);
+            console.log("[AuthHandler] User username:", userData.username);
+            dispatch(signInSuccess(userData));
             console.log("[AuthHandler] User signed in:", data);
             toast.success("Connexion Google réussie !", {
               position: "top-right",
