@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 import AuthHandler from "./components/AuthHandler";
 import Footer from "./components/Footer";
 import Header from "./components/Header";
+import { PrivateRoute } from "./components/PrivateRoute";
 import ThemeProvider from "./components/ThemeProvider";
 import About from "./pages/About";
 import DashBoard from "./pages/DashBoard";
@@ -34,7 +35,14 @@ function App() {
                 path="/signup"
                 element={<Navigate to="/sign-up" replace />}
               />
-              <Route path="/dashboard" element={<DashBoard />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <PrivateRoute showAccessDenied={true}>
+                    <DashBoard />
+                  </PrivateRoute>
+                }
+              />
               <Route path="/projects" element={<Projects />} />
               <Route path="/auth-handler" element={<AuthHandler />} />
 

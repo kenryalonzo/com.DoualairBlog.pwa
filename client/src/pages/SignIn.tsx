@@ -10,7 +10,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { useDispatch } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OAuth from "../components/OAuth"; // Import the OAuth component
@@ -43,6 +43,7 @@ const SignIn = () => {
     password: false,
   });
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
 
   // Fonction pour calculer la force du mot de passe (identique à SignUp)
@@ -151,9 +152,10 @@ const SignIn = () => {
           pauseOnHover: true,
           draggable: true,
         });
-        // Redirection vers le dashboard après connexion réussie
+        // Redirection vers la page d'origine ou le dashboard après connexion réussie
         setTimeout(() => {
-          navigate("/dashboard");
+          const from = location.state?.from?.pathname || "/dashboard";
+          navigate(from);
         }, 1500);
       } else {
         dispatch(signInFailure(data.message || "Erreur de connexion"));

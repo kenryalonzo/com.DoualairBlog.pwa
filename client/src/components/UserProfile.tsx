@@ -5,7 +5,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { signOutSuccess } from "../redux/user/userSlice";
 
@@ -31,6 +31,7 @@ const UserProfile = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useSelector((state: RootState) => state.user);
 
   // Helper to format name
@@ -42,10 +43,9 @@ const UserProfile = () => {
     return user.username || "Utilisateur";
   };
 
-  // Handle profile click (placeholder for navigation or modal)
+  // Handle profile click - navigate to dashboard
   const handleProfileClick = () => {
-    // Add navigation or profile page logic here
-    console.log("Naviguer vers le profil");
+    navigate("/dashboard");
     setIsDropdownOpen(false);
   };
 
@@ -159,20 +159,24 @@ const UserProfile = () => {
               <div className="p-2">
                 <motion.button
                   onClick={handleProfileClick}
-                  className="w-full flex items-center px-3 py-3 text-sm rounded-lg hover:bg-base-200 transition-colors duration-200"
+                  className={`w-full flex items-center px-3 py-3 text-sm rounded-lg transition-colors duration-200 ${
+                    location.pathname === "/dashboard"
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-base-200 text-base-content"
+                  }`}
                   whileHover={{ x: 4 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <UserIcon className="w-5 h-5 mr-3 text-primary" />
-                  <span className="flex-1 text-left text-base-content">
-                    Mon Profil
-                  </span>
-                  <motion.div
-                    className="w-2 h-2 bg-primary rounded-full"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.1 }}
-                  />
+                  <span className="flex-1 text-left">Mon Profil</span>
+                  {location.pathname === "/dashboard" && (
+                    <motion.div
+                      className="w-2 h-2 bg-primary rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.1 }}
+                    />
+                  )}
                 </motion.button>
                 <div className="border-t border-base-300 my-2"></div>
                 <motion.button

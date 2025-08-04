@@ -1,370 +1,25 @@
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { AnimatePresence, motion as m, motion } from "framer-motion";
-import {
-  Camera,
-  KeyRound,
-  LogOut,
-  Palette,
-  ShieldCheck,
-  Trash2,
-  User,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import {
+  DashboardHeader,
+  DashboardSidebar,
+  DeleteConfirmModal,
+  MobileSidebar,
+  ProfileSettings,
+  SecuritySettings,
+  UserDataDebug,
+} from "../components/dashboard";
+import type { ProfileUpdateData, User } from "../components/dashboard/types";
 import type { RootState } from "../redux/store";
 import { signOutSuccess } from "../redux/user/userSlice";
-
-// --- Types ---
-type User = {
-  username?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  name?: string;
-  photo?: string;
-  profilePicture?: string | null;
-};
-
-type ProfileSettingsProps = {
-  currentUser: User;
-  onUpdateProfile: (data: {
-    username?: string;
-    email?: string;
-    profilePicture?: string;
-  }) => void;
-};
-
-type SecuritySettingsProps = {
-  onShowDeleteConfirm: () => void;
-  onDeleteAccount: () => void;
-  onUpdatePassword: (newPassword: string, confirmPassword: string) => void;
-};
-
-// --- Section des composants de contenu ---
-
-/**
- * Section pour modifier les informations du profil
- */
-const ProfileSettings = ({
-  currentUser,
-  onUpdateProfile,
-}: ProfileSettingsProps) => {
-  const filePickerRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState({
-    username: currentUser?.username || "",
-    email: currentUser?.email || "",
-    profilePicture: currentUser?.profilePicture || undefined,
-  });
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setFormData((prev) => ({ ...prev, profilePicture: result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveProfile = async () => {
-    if (!formData.username.trim() || !formData.email.trim()) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await onUpdateProfile(formData);
-      toast.success("Profil mis à jour avec succès !");
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour du profil");
-      console.error("Erreur lors de la mise à jour du profil:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <motion.div
-      key="profile"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
-      {/* Carte pour la photo de profil */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h3 className="card-title">
-            <Camera className="w-5 h-5" />
-            Photo de profil
-          </h3>
-          <p className="text-base-content/70">
-            Mettez à jour votre photo de profil.
-          </p>
-
-          <div className="flex flex-col md:flex-row items-center gap-6 mt-4">
-            <div className="avatar">
-              <div className="w-20 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                <img
-                  src={
-                    formData.profilePicture ||
-                    `https://placehold.co/80x80/E2E8F0/475569?text=${currentUser?.username
-                      ?.charAt(0)
-                      .toUpperCase()}`
-                  }
-                  alt="Photo de profil"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null;
-                    target.src = `https://placehold.co/80x80/E2E8F0/475569?text=${currentUser?.username
-                      ?.charAt(0)
-                      .toUpperCase()}`;
-                  }}
-                />
-              </div>
-            </div>
-
-            <input
-              type="file"
-              ref={filePickerRef}
-              className="hidden"
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-            <button
-              onClick={() => filePickerRef.current?.click()}
-              className="btn btn-outline w-full md:w-auto"
-            >
-              Changer la photo
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Carte pour les informations personnelles */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h3 className="card-title">
-            <User className="w-5 h-5" />
-            Informations personnelles
-          </h3>
-          <p className="text-base-content/70">
-            Modifiez votre nom d'utilisateur et votre adresse e-mail.
-          </p>
-
-          <div className="form-control w-full mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="label">
-                  <span className="label-text">Nom d'utilisateur</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) =>
-                    handleInputChange("username", e.target.value)
-                  }
-                  className="input input-bordered w-full"
-                />
-              </div>
-              <div>
-                <label className="label">
-                  <span className="label-text">Adresse e-mail</span>
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="input input-bordered w-full"
-                />
-              </div>
-            </div>
-
-            <div className="card-actions justify-end mt-6">
-              <button
-                onClick={handleSaveProfile}
-                disabled={isLoading}
-                className="btn btn-primary"
-              >
-                {isLoading ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm"></span>
-                    Enregistrement...
-                  </>
-                ) : (
-                  "Enregistrer les modifications"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-/**
- * Section pour la sécurité du compte
- */
-const SecuritySettings = ({
-  onShowDeleteConfirm,
-  onUpdatePassword,
-}: SecuritySettingsProps) => {
-  const [passwordData, setPasswordData] = useState({
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handlePasswordChange = (field: string, value: string) => {
-    setPasswordData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleUpdatePassword = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas");
-      return;
-    }
-    if (passwordData.newPassword.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await onUpdatePassword(
-        passwordData.newPassword,
-        passwordData.confirmPassword
-      );
-      setPasswordData({ newPassword: "", confirmPassword: "" });
-      toast.success("Mot de passe mis à jour avec succès !");
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour du mot de passe");
-      console.error("Erreur lors de la mise à jour du mot de passe:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <motion.div
-      key="security"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
-      {/* Carte pour le mot de passe */}
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <h3 className="card-title">
-            <KeyRound className="w-5 h-5" />
-            Mot de passe
-          </h3>
-          <p className="text-base-content/70">
-            Changez votre mot de passe régulièrement pour sécuriser votre
-            compte.
-          </p>
-
-          <div className="form-control w-full mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="label">
-                  <span className="label-text">Nouveau mot de passe</span>
-                </label>
-                <input
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={(e) =>
-                    handlePasswordChange("newPassword", e.target.value)
-                  }
-                  placeholder="••••••••"
-                  className="input input-bordered w-full"
-                />
-              </div>
-              <div>
-                <label className="label">
-                  <span className="label-text">Confirmer le mot de passe</span>
-                </label>
-                <input
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) =>
-                    handlePasswordChange("confirmPassword", e.target.value)
-                  }
-                  placeholder="••••••••"
-                  className="input input-bordered w-full"
-                />
-              </div>
-            </div>
-
-            <div className="card-actions justify-end mt-6">
-              <button
-                onClick={handleUpdatePassword}
-                disabled={
-                  isLoading ||
-                  !passwordData.newPassword ||
-                  !passwordData.confirmPassword
-                }
-                className="btn btn-primary"
-              >
-                {isLoading ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm"></span>
-                    Mise à jour...
-                  </>
-                ) : (
-                  "Changer le mot de passe"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Zone de danger */}
-      <div className="card bg-error/10 border-error/20 shadow-xl">
-        <div className="card-body">
-          <h3 className="card-title text-error">
-            <Trash2 className="w-5 h-5" />
-            Zone de danger
-          </h3>
-          <p className="text-error/80">
-            La suppression de votre compte est une action irréversible. Toutes
-            vos données, y compris vos articles et commentaires, seront
-            définitivement effacées.
-          </p>
-
-          <div className="card-actions justify-end">
-            <button onClick={onShowDeleteConfirm} className="btn btn-error">
-              Supprimer mon compte
-            </button>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
-// --- Composant principal du tableau de bord ---
 
 const DashBoard = () => {
   // --- États ---
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
 
   // --- Hooks Redux et Router ---
   const dispatch = useDispatch();
@@ -373,7 +28,7 @@ const DashBoard = () => {
   const { currentUser } = useSelector((state: RootState) => state.user);
 
   // Gérer le cas où currentUser peut être null
-  const user = currentUser || {
+  const user: User = currentUser || {
     username: "Utilisateur",
     email: "user@example.com",
     profilePicture: null,
@@ -391,10 +46,9 @@ const DashBoard = () => {
   const activeTab = getActiveTab();
 
   // Fonction pour naviguer vers une section
-  const navigateToSection = (section: string, action?: string) => {
+  const navigateToSection = (section: string) => {
     const params = new URLSearchParams();
     params.set("section", section);
-    if (action) params.set("action", action);
     setSearchParams(params);
   };
 
@@ -462,11 +116,7 @@ const DashBoard = () => {
     }
   };
 
-  const handleUpdateProfile = async (data: {
-    username?: string;
-    email?: string;
-    profilePicture?: string;
-  }) => {
+  const handleUpdateProfile = async (data: ProfileUpdateData) => {
     try {
       const response = await fetch("/api/user/profile", {
         method: "PUT",
@@ -520,24 +170,10 @@ const DashBoard = () => {
     }
   };
 
-  // Fermer la sidebar en cliquant à l'extérieur
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target as Node)
-      ) {
-        setIsSidebarOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   // --- Éléments de menu ---
   const menuItems = [
-    { id: "profile", name: "Profil", icon: User, url: "profile" },
-    { id: "security", name: "Sécurité", icon: ShieldCheck, url: "security" },
+    { id: "profile", name: "Profil", url: "profile" },
+    { id: "security", name: "Sécurité", url: "security" },
   ];
 
   // --- Rendu du contenu dynamique ---
@@ -554,7 +190,6 @@ const DashBoard = () => {
         return (
           <SecuritySettings
             onShowDeleteConfirm={() => setShowDeleteConfirm(true)}
-            onDeleteAccount={handleDeleteAccount}
             onUpdatePassword={handleUpdatePassword}
           />
         );
@@ -569,182 +204,32 @@ const DashBoard = () => {
       <div className="flex flex-col lg:flex-row">
         {/* Sidebar (Desktop) */}
         <div className="hidden lg:block lg:w-64 lg:flex-shrink-0">
-          <div className="fixed left-0 top-0 h-full w-64 bg-base-100 shadow-xl border-r border-base-300 flex flex-col z-50">
-            {/* Logo */}
-            <div className="navbar bg-base-100 border-b border-base-300">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 p-4">
-                  <Palette className="w-6 h-6 text-primary" />
-                  <h1 className="text-xl font-bold">Mon Dashboard</h1>
-                </div>
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <div className="flex-1 p-4 overflow-y-auto">
-              <ul className="menu menu-lg bg-base-100 w-full">
-                {menuItems.map((item) => (
-                  <li key={item.id}>
-                    <button
-                      onClick={() => navigateToSection(item.url)}
-                      className={`${
-                        activeTab === item.id ? "bg-base-200" : ""
-                      } rounded-lg`}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      {item.name}
-                      {item.id === "profile" && user?.role && (
-                        <m.span
-                          initial={{ scale: 0.7, opacity: 0, x: 10 }}
-                          animate={{ scale: 1, opacity: 1, x: 0 }}
-                          transition={{
-                            type: "spring",
-                            stiffness: 400,
-                            damping: 20,
-                          }}
-                          className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${
-                            user.role === "admin"
-                              ? "bg-gradient-to-r from-red-500 to-pink-500"
-                              : "bg-gradient-to-r from-blue-500 to-cyan-400"
-                          } text-white`}
-                        >
-                          {user.role === "admin"
-                            ? "ADMIN"
-                            : user.role.toUpperCase()}
-                        </m.span>
-                      )}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Section Déconnexion */}
-            <div className="p-4 border-t border-base-300">
-              <button
-                onClick={handleSignOut}
-                className="btn btn-outline w-full"
-              >
-                <LogOut className="w-5 h-5" />
-                Se déconnecter
-              </button>
-            </div>
-          </div>
+          <DashboardSidebar
+            currentUser={user}
+            activeTab={activeTab}
+            onNavigateToSection={navigateToSection}
+            onSignOut={handleSignOut}
+          />
         </div>
 
         {/* Header Mobile */}
-        <div className="lg:hidden navbar bg-base-100 shadow-lg sticky top-0 z-40">
-          <div className="navbar-start">
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="btn btn-ghost btn-square"
-            >
-              <Bars3Icon className="w-6 h-6" />
-            </button>
-          </div>
-          <div className="navbar-center">
-            <h1 className="text-lg font-semibold">
-              {menuItems.find((item) => item.id === activeTab)?.name}
-            </h1>
-          </div>
-          <div className="navbar-end">
-            <div className="w-8"></div>
-          </div>
-        </div>
+        <DashboardHeader
+          activeTab={activeTab}
+          onOpenSidebar={() => setIsSidebarOpen(true)}
+        />
 
         {/* Sidebar (Mobile) */}
-        <AnimatePresence>
-          {isSidebarOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 lg:hidden"
-                onClick={() => setIsSidebarOpen(false)}
-              />
-              <motion.div
-                ref={sidebarRef}
-                initial={{ x: "-100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "-100%" }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="fixed left-0 top-0 h-full w-64 bg-base-100 shadow-xl z-50 lg:hidden flex flex-col"
-              >
-                <div className="navbar bg-base-100 border-b border-base-300">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 p-4">
-                      <Palette className="w-6 h-6 text-primary" />
-                      <h1 className="text-xl font-bold">Dashboard</h1>
-                    </div>
-                  </div>
-                  <div className="flex-none">
-                    <button
-                      onClick={() => setIsSidebarOpen(false)}
-                      className="btn btn-ghost btn-square"
-                    >
-                      <XMarkIcon className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex-1 p-4 overflow-y-auto">
-                  <ul className="menu menu-lg bg-base-100 w-full">
-                    {menuItems.map((item) => (
-                      <li key={item.id}>
-                        <button
-                          onClick={() => {
-                            navigateToSection(item.url);
-                            setIsSidebarOpen(false);
-                          }}
-                          className={`${
-                            activeTab === item.id ? "bg-base-200" : ""
-                          } rounded-lg`}
-                        >
-                          <item.icon className="w-5 h-5" />
-                          {item.name}
-                          {item.id === "profile" && user?.role && (
-                            <m.span
-                              initial={{ scale: 0.7, opacity: 0, x: 10 }}
-                              animate={{ scale: 1, opacity: 1, x: 0 }}
-                              transition={{
-                                type: "spring",
-                                stiffness: 400,
-                                damping: 20,
-                              }}
-                              className={`ml-2 px-2 py-1 rounded-full text-xs font-semibold ${
-                                user.role === "admin"
-                                  ? "bg-gradient-to-r from-red-500 to-pink-500"
-                                  : "bg-gradient-to-r from-blue-500 to-cyan-400"
-                              } text-white`}
-                            >
-                              {user.role === "admin"
-                                ? "ADMIN"
-                                : user.role.toUpperCase()}
-                            </m.span>
-                          )}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="p-4 border-t border-base-300">
-                  <button
-                    onClick={handleSignOut}
-                    className="btn btn-outline w-full"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    Se déconnecter
-                  </button>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+        <MobileSidebar
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          currentUser={user}
+          activeTab={activeTab}
+          onNavigateToSection={navigateToSection}
+          onSignOut={handleSignOut}
+        />
 
         {/* Contenu Principal */}
-        <main className="flex-1 lg:ml-64 p-4 lg:p-6">
+        <main className="flex-1 lg:ml-48 p-4 lg:p-6">
           <div className="max-w-6xl mx-auto">
             {/* Header du contenu */}
             <div className="mb-6">
@@ -756,6 +241,9 @@ const DashBoard = () => {
               </p>
             </div>
 
+            {/* Debug - Données utilisateur (développement uniquement) */}
+            <UserDataDebug user={user} />
+
             {/* Contenu dynamique */}
             <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>
           </div>
@@ -763,46 +251,11 @@ const DashBoard = () => {
       </div>
 
       {/* Modal de confirmation de suppression */}
-      <AnimatePresence>
-        {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="modal-box max-w-md bg-base-100"
-            >
-              <div className="text-center">
-                <div className="mx-auto w-12 h-12 rounded-full bg-error/20 flex items-center justify-center mb-4">
-                  <Trash2 className="w-6 h-6 text-error" />
-                </div>
-                <h3 className="text-lg font-semibold">Supprimer le compte</h3>
-                <p className="text-base-content/70 mt-2">
-                  Êtes-vous sûr de vouloir supprimer votre compte ? Cette action
-                  est définitive et irréversible.
-                </p>
-              </div>
-
-              <div className="modal-action">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="btn btn-ghost"
-                >
-                  Annuler
-                </button>
-                <button onClick={handleDeleteAccount} className="btn btn-error">
-                  Oui, supprimer
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <DeleteConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteAccount}
+      />
     </div>
   );
 };
