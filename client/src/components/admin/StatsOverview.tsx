@@ -6,13 +6,13 @@ import {
   Tag,
   Eye,
   TrendingUp,
-  Calendar,
-  Users,
+  // Calendar, // Unused import
+  // Users, // Unused import
   Clock,
   BarChart3,
   PieChart,
   Activity,
-  Star,
+  // Star, // Unused import
 } from 'lucide-react';
 import { useToastContext } from '../../contexts/ToastContext';
 import { articleService } from '../../services/articleService';
@@ -106,7 +106,7 @@ const StatsOverview: React.FC = () => {
       const tags = tagsResponse.tags || [];
       const tagStats = {
         total: tags.length,
-        totalUsage: tags.reduce((sum, tag) => sum + (tag.usageCount || 0), 0),
+        totalUsage: tags.reduce((sum, tag) => sum + (tag.articlesCount || 0), 0),
       };
 
       setStats({
@@ -357,7 +357,7 @@ const StatsOverview: React.FC = () => {
             {stats.recent.tags.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {stats.recent.tags
-                  .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
+                                      .sort((a, b) => (b.articlesCount || 0) - (a.articlesCount || 0))
                   .slice(0, 10)
                   .map((tag) => (
                     <span
@@ -365,7 +365,7 @@ const StatsOverview: React.FC = () => {
                       className="badge badge-outline"
                       style={{ borderColor: tag.color, color: tag.color }}
                     >
-                      {tag.name} ({tag.usageCount || 0})
+                                              {tag.name} ({tag.articlesCount || 0})
                     </span>
                   ))}
               </div>

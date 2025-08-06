@@ -272,6 +272,36 @@ export const updateUserById: ControllerFunction = async (
   }
 };
 
+// Supprimer son propre compte (utilisateur connecté)
+export const deleteAccount: ControllerFunction = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return next(createError(401, "Utilisateur non authentifié"));
+    }
+
+    // Empêcher la suppression du compte admin principal
+    if (req.user.role === "admin" && req.user.email === process.env.ADMIN_EMAIL) {
+      return next(createError(403, "Impossible de supprimer le compte administrateur principal"));
+    }
+
+    const user = await User.findByIdAndDelete(req.user.id);
+    if (!user) {
+      return next(createError(404, "Utilisateur non trouvé"));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Compte supprimé avec succès",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Supprimer un utilisateur (admin seulement)
 export const deleteUserById: ControllerFunction = async (
   req: Request,

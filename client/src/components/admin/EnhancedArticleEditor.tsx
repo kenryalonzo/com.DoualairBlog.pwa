@@ -200,7 +200,7 @@ const EnhancedArticleEditor: React.FC<EnhancedArticleEditorProps> = ({
       };
 
       let savedArticle: Article;
-      if (article?._id) {
+      if (article && article._id) {
         savedArticle = await articleService.update(article._id, dataToSave);
         toast.success("Article mis à jour avec succès !");
       } else {
@@ -209,7 +209,9 @@ const EnhancedArticleEditor: React.FC<EnhancedArticleEditorProps> = ({
       }
 
       setLastSaved(new Date());
-      onSave?.(savedArticle);
+      if (onSave && savedArticle) {
+        onSave(savedArticle);
+      }
     } catch (error: any) {
       console.error("Erreur lors de la sauvegarde:", error);
       toast.error(error.message || "Erreur lors de la sauvegarde");

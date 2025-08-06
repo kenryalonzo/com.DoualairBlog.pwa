@@ -121,7 +121,7 @@ export const getCategories: ControllerFunction = async (
 
 // Obtenir la hiérarchie des catégories
 export const getCategoryHierarchy: ControllerFunction = async (
-  req: AuthRequest,
+  _req: AuthRequest,
   res: Response
 ) => {
   try {
@@ -265,7 +265,7 @@ export const toggleCategoryStatus: ControllerFunction = async (
 
 // Obtenir les statistiques des catégories
 export const getCategoryStats: ControllerFunction = async (
-  req: AuthRequest,
+  _req: AuthRequest,
   res: Response
 ) => {
   try {

@@ -177,4 +177,101 @@ export const apiService = {
   }
 };
 
-export default { authService, apiService };
+// Service utilisateur pour la gestion du profil
+export const userService = {
+  // Obtenir le profil utilisateur
+  async getProfile(): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/profile`, {
+        ...defaultOptions,
+        method: 'GET',
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors de la récupération du profil');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la récupération du profil:', error);
+      throw error;
+    }
+  },
+
+  // Mettre à jour le profil utilisateur
+  async updateProfile(profileData: {
+    username?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  }): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/profile`, {
+        ...defaultOptions,
+        method: 'PUT',
+        body: JSON.stringify(profileData),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors de la mise à jour du profil');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du profil:', error);
+      throw error;
+    }
+  },
+
+  // Changer le mot de passe
+  async changePassword(passwordData: {
+    currentPassword: string;
+    newPassword: string;
+  }): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+        ...defaultOptions,
+        method: 'PUT',
+        body: JSON.stringify(passwordData),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors du changement de mot de passe');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erreur lors du changement de mot de passe:', error);
+      throw error;
+    }
+  },
+
+  // Supprimer le compte
+  async deleteAccount(): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/profile`, {
+        ...defaultOptions,
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors de la suppression du compte');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Erreur lors de la suppression du compte:', error);
+      throw error;
+    }
+  }
+};
+
+export default { authService, apiService, userService };

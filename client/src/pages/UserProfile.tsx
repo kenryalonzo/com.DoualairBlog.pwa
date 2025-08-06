@@ -49,11 +49,12 @@ const UserProfilePage = () => {
   const handleSaveProfile = async () => {
     setIsLoading(true);
     try {
-      // TODO: Implémenter la mise à jour du profil via API
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulation
+      const { userService } = await import("../services/api");
+      await userService.updateProfile(formData);
       toast.success("Profil mis à jour avec succès !");
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour du profil");
+    } catch (error: any) {
+      console.error("Erreur lors de la mise à jour du profil:", error);
+      toast.error(error.message || "Erreur lors de la mise à jour du profil");
     } finally {
       setIsLoading(false);
     }
@@ -61,13 +62,14 @@ const UserProfilePage = () => {
 
   const handleDeleteAccount = async () => {
     try {
-      // TODO: Implémenter la suppression du compte via API
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulation
+      const { userService } = await import("../services/api");
+      await userService.deleteAccount();
       toast.success("Compte supprimé avec succès");
       logout();
       navigate("/");
-    } catch (error) {
-      toast.error("Erreur lors de la suppression du compte");
+    } catch (error: any) {
+      console.error("Erreur lors de la suppression du compte:", error);
+      toast.error(error.message || "Erreur lors de la suppression du compte");
     }
     setShowDeleteConfirm(false);
   };

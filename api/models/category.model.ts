@@ -14,10 +14,18 @@ const generateSlug = (name: string): string => {
 // Interface pour le document Category avec méthodes
 interface ICategoryDocument extends ICategory {
   generateSlug(): string;
-  // updateArticlesCount(): Promise<void>; // Désactivé temporairement
   getChildren(): Promise<ICategoryDocument[]>;
   getParent(): Promise<ICategoryDocument | null>;
   isChildOf(categoryId: string): Promise<boolean>;
+}
+
+// Interface pour les méthodes statiques
+interface ICategoryModel extends mongoose.Model<ICategoryDocument> {
+  findBySlug(slug: string): Promise<ICategoryDocument | null>;
+  getRootCategories(): Promise<ICategoryDocument[]>;
+  getHierarchy(): Promise<any[]>;
+  search(query: string): Promise<ICategoryDocument[]>;
+  getStats(): Promise<{ total: number; withArticles: number; avgArticlesPerCategory: number }>;
 }
 
 const categorySchema = new Schema<ICategoryDocument>(
@@ -290,7 +298,7 @@ categorySchema.statics.getHierarchy = async function () {
   }));
 };
 
-const Category = mongoose.model<ICategoryDocument>("Category", categorySchema);
+const Category = mongoose.model<ICategoryDocument, ICategoryModel>("Category", categorySchema);
 
 export default Category;
 export type { ICategoryDocument };
