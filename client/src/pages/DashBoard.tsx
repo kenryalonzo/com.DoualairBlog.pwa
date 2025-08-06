@@ -1,8 +1,7 @@
 import { AnimatePresence } from "framer-motion";
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { toast } from "react-toastify";
 import {
   DashboardHeader,
   DashboardSidebar,
@@ -10,36 +9,68 @@ import {
   MobileSidebar,
   ProfileSettings,
   SecuritySettings,
-  UserDataDebug,
 } from "../components/dashboard";
-import type { ProfileUpdateData, User } from "../components/dashboard/types";
-import type { RootState } from "../redux/store";
-import { signOutSuccess } from "../redux/user/userSlice";
+import type { ProfileUpdateData } from "../components/dashboard/types";
+import { useToastContext } from "../contexts/ToastContext";
+import { useAuth } from "../hooks/useAuth";
+import {
+  updateUserFailure,
+  updateUserStart,
+  updateUserSuccess,
+} from "../redux/user/userSlice";
+import { authService, userService } from "../services/api";
 
 const DashBoard = () => {
   // --- États ---
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Debug pour la modale
+  console.log("[Dashboard] showDeleteConfirm:", showDeleteConfirm);
+
   // --- Hooks Redux et Router ---
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { currentUser } = useSelector((state: RootState) => state.user);
+  const { user, isAuthenticated, authType, logout } = useAuth();
+  const { toast } = useToastContext();
 
-  // Gérer le cas où currentUser peut être null
-  const user: User = currentUser || {
-    username: "Utilisateur",
-    email: "user@example.com",
-    profilePicture: null,
-  };
+  // Vérifier l'authentification avec useEffect
+  useEffect(() => {
+    if (!isAuthenticated || !user) {
+      console.log("[Dashboard] User not authenticated, redirecting to sign-in");
+      navigate("/sign-in");
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  // Afficher un loader si pas encore authentifié
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  console.log("[Dashboard] User authenticated via:", authType);
+  console.log("[Dashboard] User role:", user.role);
 
   // --- Gestion du routage ---
   const currentSection = searchParams.get("section") || "profile";
 
   // Déterminer l'onglet actif basé sur l'URL
   const getActiveTab = () => {
-    if (currentSection === "security") return "security";
+    const validSections = [
+      "profile",
+      "security",
+      "articles",
+      "categories",
+      "tags",
+      "analytics",
+    ];
+    if (currentSection && validSections.includes(currentSection)) {
+      return currentSection;
+    }
     return "profile";
   };
 
@@ -53,62 +84,39 @@ const DashBoard = () => {
   };
 
   // --- Gestionnaires d'événements ---
+
   const handleSignOut = async () => {
     try {
-      const response = await fetch("/api/auth/signout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
+      // Afficher le toast immédiatement
+      toast.success("Déconnexion en cours...", 2000);
 
-      if (response.ok) {
-        dispatch(signOutSuccess());
-        toast.success("Déconnexion réussie !", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        setTimeout(() => navigate("/"), 1000);
-      } else {
-        toast.error("Erreur lors de la déconnexion", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-        console.error("Erreur lors de la déconnexion:", response.status);
+      // Déconnexion Firebase si nécessaire
+      if (authType === "firebase") {
+        await authService.signOut();
       }
+
+      // Déconnexion unifiée (nettoie JWT + Redux)
+      logout();
+
+      toast.success("Déconnexion réussie !");
+      setTimeout(() => navigate("/"), 1500);
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error);
-      toast.error("Erreur lors de la déconnexion", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      dispatch(signOutSuccess());
-      setTimeout(() => navigate("/"), 1000);
+      toast.error("Erreur lors de la déconnexion");
+
+      // Déconnecter quand même l'utilisateur côté client
+      logout();
+      setTimeout(() => navigate("/"), 1500);
     }
   };
 
   const handleDeleteAccount = async () => {
     try {
-      const response = await fetch("/api/user/profile", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Erreur lors de la suppression du compte"
-        );
-      }
-
+      await userService.deleteAccount();
       console.log("Compte supprimé avec succès");
       setShowDeleteConfirm(false);
       toast.success("Compte supprimé avec succès");
-      dispatch(signOutSuccess());
+      logout();
       navigate("/");
     } catch (error) {
       toast.error("Erreur lors de la suppression du compte");
@@ -117,63 +125,98 @@ const DashBoard = () => {
   };
 
   const handleUpdateProfile = async (data: ProfileUpdateData) => {
+    dispatch(updateUserStart());
+
+    // Toast immédiat pour indiquer le début de l'opération
+    toast.info("Mise à jour du profil en cours...", 2000);
+
     try {
-      const response = await fetch("/api/user/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
+      const response = await userService.updateProfile(data);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Erreur lors de la mise à jour du profil"
-        );
+      // Mettre à jour l'état Redux avec les nouvelles données utilisateur
+      if (response.data && response.data.user) {
+        dispatch(updateUserSuccess(response.data.user));
+
+        // Toast de succès immédiat
+        toast.success("✅ Profil mis à jour avec succès !", 3000);
+      } else {
+        throw new Error("Réponse invalide du serveur");
       }
-
-      const result = await response.json();
-      console.log("Profil mis à jour:", result);
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la mise à jour du profil";
       console.error("Erreur lors de la mise à jour du profil:", error);
+      dispatch(updateUserFailure(errorMessage));
+
+      // Toast d'erreur immédiat
+      toast.error(`❌ ${errorMessage}`, 5000);
       throw error;
     }
   };
 
   const handleUpdatePassword = async (
+    currentPassword: string,
     newPassword: string,
     confirmPassword: string
   ) => {
-    if (newPassword !== confirmPassword)
+    if (newPassword !== confirmPassword) {
+      toast.error("❌ Les mots de passe ne correspondent pas");
       throw new Error("Les mots de passe ne correspondent pas");
+    }
+
+    // Toast immédiat
+    toast.info("🔄 Changement de mot de passe en cours...", 2000);
 
     try {
-      const response = await fetch("/api/auth/change-password", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ newPassword }),
-      });
+      await userService.updatePassword({ currentPassword, newPassword });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Erreur lors du changement de mot de passe"
-        );
-      }
-
-      const result = await response.json();
-      console.log("Mot de passe mis à jour avec succès:", result);
-    } catch (error) {
+      // Toast de succès immédiat
+      toast.success("✅ Mot de passe mis à jour avec succès !", 3000);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erreur lors du changement de mot de passe";
       console.error("Erreur lors de la mise à jour du mot de passe:", error);
+
+      // Toast d'erreur immédiat
+      toast.error(`❌ ${errorMessage}`, 5000);
       throw error;
     }
   };
 
   // --- Éléments de menu ---
   const menuItems = [
-    { id: "profile", name: "Profil", url: "profile" },
-    { id: "security", name: "Sécurité", url: "security" },
+    { id: "profile", name: "Profil", url: "profile", icon: "👤" },
+    { id: "security", name: "Sécurité", url: "security", icon: "🔒" },
+    ...(user.role === "admin"
+      ? [
+          {
+            id: "articles",
+            name: "Articles",
+            url: "articles",
+            icon: "📝",
+            admin: true,
+          },
+          {
+            id: "categories",
+            name: "Catégories",
+            url: "categories",
+            icon: "🏷️",
+            admin: true,
+          },
+          { id: "tags", name: "Tags", url: "tags", icon: "🔖", admin: true },
+          {
+            id: "analytics",
+            name: "Statistiques",
+            url: "analytics",
+            icon: "📊",
+            admin: true,
+          },
+        ]
+      : []),
   ];
 
   // --- Rendu du contenu dynamique ---
@@ -193,6 +236,70 @@ const DashBoard = () => {
             onUpdatePassword={handleUpdatePassword}
           />
         );
+      case "articles": {
+        const ArticleManagement = lazy(
+          () => import("../components/admin/ArticleManagement")
+        );
+        return (
+          <Suspense
+            fallback={
+              <div className="flex justify-center items-center py-12">
+                <span className="loading loading-spinner loading-lg"></span>
+              </div>
+            }
+          >
+            <ArticleManagement />
+          </Suspense>
+        );
+      }
+      case "categories": {
+        const CategoryManagement = lazy(
+          () => import("../components/admin/CategoryManagement")
+        );
+        return (
+          <Suspense
+            fallback={
+              <div className="flex justify-center items-center py-12">
+                <span className="loading loading-spinner loading-lg"></span>
+              </div>
+            }
+          >
+            <CategoryManagement />
+          </Suspense>
+        );
+      }
+      case "tags": {
+        const TagManagement = lazy(
+          () => import("../components/admin/TagManagement")
+        );
+        return (
+          <Suspense
+            fallback={
+              <div className="flex justify-center items-center py-12">
+                <span className="loading loading-spinner loading-lg"></span>
+              </div>
+            }
+          >
+            <TagManagement />
+          </Suspense>
+        );
+      }
+      case "analytics": {
+        const StatsOverview = lazy(
+          () => import("../components/admin/StatsOverview")
+        );
+        return (
+          <Suspense
+            fallback={
+              <div className="flex justify-center items-center py-12">
+                <span className="loading loading-spinner loading-lg"></span>
+              </div>
+            }
+          >
+            <StatsOverview />
+          </Suspense>
+        );
+      }
       default:
         return null;
     }
@@ -207,6 +314,7 @@ const DashBoard = () => {
           <DashboardSidebar
             currentUser={user}
             activeTab={activeTab}
+            menuItems={menuItems}
             onNavigateToSection={navigateToSection}
             onSignOut={handleSignOut}
           />
@@ -224,6 +332,7 @@ const DashBoard = () => {
           onClose={() => setIsSidebarOpen(false)}
           currentUser={user}
           activeTab={activeTab}
+          menuItems={menuItems}
           onNavigateToSection={navigateToSection}
           onSignOut={handleSignOut}
         />
@@ -240,9 +349,6 @@ const DashBoard = () => {
                 Gérez les paramètres de votre compte ici.
               </p>
             </div>
-
-            {/* Debug - Données utilisateur (développement uniquement) */}
-            <UserDataDebug user={user} />
 
             {/* Contenu dynamique */}
             <AnimatePresence mode="wait">{renderContent()}</AnimatePresence>

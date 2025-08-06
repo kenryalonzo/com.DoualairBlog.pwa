@@ -2,13 +2,39 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { FaArrowRight, FaNewspaper, FaPlane, FaRocket } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useToastContext } from "../contexts/ToastContext";
+import { useAuth } from "../hooks/useAuth";
+import { articleService } from "../services/articleService";
 
 const Home = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [articles, setArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToastContext();
 
   useEffect(() => {
     setIsVisible(true);
+    loadArticles();
   }, []);
+
+  const loadArticles = async () => {
+    try {
+      setLoading(true);
+      const response = await articleService.getAll({
+        page: 1,
+        limit: 6,
+        status: "published",
+        sort: "createdAt",
+        order: "desc",
+      });
+      setArticles(response.articles || []);
+    } catch (error) {
+      console.error("Erreur lors du chargement des articles:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -152,34 +178,36 @@ const Home = () => {
               technologiques du secteur aérien.
             </motion.p>
 
-            {/* CTA Buttons */}
-            <motion.div
-              className="flex flex-col sm:flex-row gap-4 justify-center mb-12 md:mb-16"
-              variants={itemVariants}
-            >
-              <Link to="/sign-in">
-                <motion.button
-                  className="btn btn-primary btn-lg w-full sm:w-auto group"
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FaPlane className="mr-2 group-hover:rotate-12 transition-transform" />
-                  Se connecter
-                  <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                </motion.button>
-              </Link>
-              <Link to="/sign-up">
-                <motion.button
-                  className="btn btn-outline btn-lg w-full sm:w-auto group"
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <FaRocket className="mr-2 group-hover:rotate-12 transition-transform" />
-                  S'inscrire
-                  <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
-                </motion.button>
-              </Link>
-            </motion.div>
+            {/* CTA Buttons - Masqués si l'utilisateur est connecté */}
+            {!user && (
+              <motion.div
+                className="flex flex-col sm:flex-row gap-4 justify-center mb-12 md:mb-16"
+                variants={itemVariants}
+              >
+                <Link to="/sign-in">
+                  <motion.button
+                    className="btn btn-primary btn-lg w-full sm:w-auto group"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FaPlane className="mr-2 group-hover:rotate-12 transition-transform" />
+                    Se connecter
+                    <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                </Link>
+                <Link to="/sign-up">
+                  <motion.button
+                    className="btn btn-outline btn-lg w-full sm:w-auto group"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <FaRocket className="mr-2 group-hover:rotate-12 transition-transform" />
+                    S'inscrire
+                    <FaArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                  </motion.button>
+                </Link>
+              </motion.div>
+            )}
 
             {/* Features Grid */}
             <motion.div
@@ -281,6 +309,101 @@ const Home = () => {
               </motion.div>
             </motion.div>
           </motion.div>
+        </div>
+      </div>
+
+      {/* Section Articles Récents */}
+      <div className="py-20 bg-base-200">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Articles Récents
+            </h2>
+            <p className="text-lg text-base-content/70 max-w-2xl mx-auto">
+              Découvrez nos dernières publications sur l'aéronautique et les
+              innovations technologiques
+            </p>
+          </motion.div>
+
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <span className="loading loading-spinner loading-lg"></span>
+            </div>
+          ) : articles.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {articles.map((article, index) => (
+                <motion.div
+                  key={article._id}
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow duration-300"
+                >
+                  {article.featuredImage && (
+                    <figure>
+                      <img
+                        src={article.featuredImage}
+                        alt={article.title}
+                        className="w-full h-48 object-cover"
+                      />
+                    </figure>
+                  )}
+                  <div className="card-body">
+                    <h3 className="card-title text-lg">{article.title}</h3>
+                    <p className="text-base-content/70 line-clamp-3">
+                      {article.excerpt ||
+                        article.content.substring(0, 150) + "..."}
+                    </p>
+                    <div className="card-actions justify-between items-center mt-4">
+                      <span className="text-sm text-base-content/60">
+                        {new Date(article.createdAt).toLocaleDateString(
+                          "fr-FR"
+                        )}
+                      </span>
+                      <Link
+                        to={`/article/${article.slug || article._id}`}
+                        className="btn btn-primary btn-sm"
+                      >
+                        Lire plus
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <FaNewspaper className="text-6xl text-base-content/30 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">
+                Aucun article publié
+              </h3>
+              <p className="text-base-content/60">
+                Les articles publiés apparaîtront ici automatiquement.
+              </p>
+            </div>
+          )}
+
+          {articles.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+              className="text-center mt-12"
+            >
+              <Link to="/articles" className="btn btn-outline btn-lg">
+                Voir tous les articles
+                <FaArrowRight className="ml-2" />
+              </Link>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>

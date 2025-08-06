@@ -1,11 +1,15 @@
 import { motion } from "framer-motion";
 import { KeyRound, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "react-toastify";
+import { useToastContext } from "../../contexts/ToastContext";
 
 type SecuritySettingsProps = {
   onShowDeleteConfirm: () => void;
-  onUpdatePassword: (newPassword: string, confirmPassword: string) => void;
+  onUpdatePassword: (
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ) => void;
 };
 
 export const SecuritySettings = ({
@@ -13,35 +17,46 @@ export const SecuritySettings = ({
   onUpdatePassword,
 }: SecuritySettingsProps) => {
   const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToastContext();
 
   const handlePasswordChange = (field: string, value: string) => {
     setPasswordData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleUpdatePassword = async () => {
+    if (!passwordData.currentPassword) {
+      toast.error("❌ Veuillez saisir votre mot de passe actuel");
+      return;
+    }
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas");
+      toast.error("❌ Les mots de passe ne correspondent pas");
       return;
     }
     if (passwordData.newPassword.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      toast.error("❌ Le mot de passe doit contenir au moins 6 caractères");
       return;
     }
 
     setIsLoading(true);
     try {
       await onUpdatePassword(
+        passwordData.currentPassword,
         passwordData.newPassword,
         passwordData.confirmPassword
       );
-      setPasswordData({ newPassword: "", confirmPassword: "" });
-      toast.success("Mot de passe mis à jour avec succès !");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      // Le toast de succès est géré dans handleUpdatePassword du Dashboard
     } catch (error) {
-      toast.error("Erreur lors de la mise à jour du mot de passe");
+      // Le toast d'erreur est géré dans handleUpdatePassword du Dashboard
       console.error("Erreur lors de la mise à jour du mot de passe:", error);
     } finally {
       setIsLoading(false);
@@ -70,34 +85,52 @@ export const SecuritySettings = ({
           </p>
 
           <div className="form-control w-full mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="label">
-                  <span className="label-text">Nouveau mot de passe</span>
+                  <span className="label-text">Mot de passe actuel</span>
                 </label>
                 <input
                   type="password"
-                  value={passwordData.newPassword}
+                  value={passwordData.currentPassword}
                   onChange={(e) =>
-                    handlePasswordChange("newPassword", e.target.value)
+                    handlePasswordChange("currentPassword", e.target.value)
                   }
                   placeholder="••••••••"
                   className="input input-bordered w-full"
                 />
               </div>
-              <div>
-                <label className="label">
-                  <span className="label-text">Confirmer le mot de passe</span>
-                </label>
-                <input
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) =>
-                    handlePasswordChange("confirmPassword", e.target.value)
-                  }
-                  placeholder="••••••••"
-                  className="input input-bordered w-full"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">
+                    <span className="label-text">Nouveau mot de passe</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) =>
+                      handlePasswordChange("newPassword", e.target.value)
+                    }
+                    placeholder="••••••••"
+                    className="input input-bordered w-full"
+                  />
+                </div>
+                <div>
+                  <label className="label">
+                    <span className="label-text">
+                      Confirmer le mot de passe
+                    </span>
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) =>
+                      handlePasswordChange("confirmPassword", e.target.value)
+                    }
+                    placeholder="••••••••"
+                    className="input input-bordered w-full"
+                  />
+                </div>
               </div>
             </div>
 
@@ -106,6 +139,7 @@ export const SecuritySettings = ({
                 onClick={handleUpdatePassword}
                 disabled={
                   isLoading ||
+                  !passwordData.currentPassword ||
                   !passwordData.newPassword ||
                   !passwordData.confirmPassword
                 }

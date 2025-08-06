@@ -86,7 +86,42 @@ export const signin: ControllerFunction = async (
   try {
     const { email, password } = req.body;
 
-    // Vérifier si l'utilisateur existe
+    // Vérifier si c'est un admin (credentials depuis .env)
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (email === adminEmail && password === adminPassword) {
+      console.log("[signin] Admin login detected");
+
+      // Générer les tokens pour l'admin
+      const adminTokens = generateAuthTokens({
+        id: "admin",
+        username: "Administrator",
+        email: adminEmail,
+        role: "admin",
+      });
+
+      // Définir les cookies pour l'admin
+      setAuthCookies(res, adminTokens.accessToken, adminTokens.refreshToken);
+
+      // Retourner la réponse admin
+      return res.status(200).json({
+        success: true,
+        message: "Connexion administrateur réussie",
+        user: {
+          id: "admin",
+          username: "Administrator",
+          email: adminEmail,
+          firstName: "Admin",
+          lastName: "User",
+          role: "admin",
+          avatar: null,
+        },
+        token: adminTokens.accessToken,
+      });
+    }
+
+    // Sinon, vérifier si l'utilisateur existe en base
     const user = await User.findOne({ email });
     if (!user) {
       return next(createError(404, "Utilisateur non trouvé"));
@@ -295,6 +330,80 @@ export const changePassword: ControllerFunction = async (
     res.status(200).json({
       success: true,
       message: "Mot de passe changé avec succès",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Vérifier l'authentification
+export const checkAuth: ControllerFunction = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return next(createError(401, "Utilisateur non authentifié"));
+    }
+
+    const user = await User.findById(req.user.id).select(
+      "-password -refreshTokens"
+    );
+    if (!user) {
+      return next(createError(404, "Utilisateur non trouvé"));
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          photo: user.avatar,
+          role: user.role,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Obtenir le profil utilisateur
+export const getProfile: ControllerFunction = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return next(createError(401, "Utilisateur non authentifié"));
+    }
+
+    const user = await User.findById(req.user.id).select(
+      "-password -refreshTokens"
+    );
+    if (!user) {
+      return next(createError(404, "Utilisateur non trouvé"));
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          photo: user.avatar,
+          role: user.role,
+        },
+      },
     });
   } catch (error) {
     next(error);

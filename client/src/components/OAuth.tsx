@@ -2,7 +2,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { FcGoogle } from "react-icons/fc";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useToastContext } from "../contexts/ToastContext";
 import { app } from "../firebase";
 import {
   signInFailure,
@@ -14,6 +14,7 @@ import { authService } from "../services/api";
 export default function OAuth() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { toast } = useToastContext();
 
   const handleGoogleClick = async () => {
     try {

@@ -1,7 +1,9 @@
 import { Router } from "express";
 import {
   changePassword,
+  checkAuth,
   forgotPassword,
+  getProfile,
   googleAuth,
   refreshToken,
   resetPassword,
@@ -26,5 +28,9 @@ router.post("/refresh", refreshToken);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.put("/change-password", verifyToken, changePassword);
+
+// Routes protégées
+router.get("/check", verifyToken, checkAuth);
+router.get("/profile", verifyToken, getProfile);
 
 export default router;

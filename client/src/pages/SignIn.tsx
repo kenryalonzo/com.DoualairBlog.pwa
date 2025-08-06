@@ -10,7 +10,7 @@ import {
   FiX,
 } from "react-icons/fi";
 import { useDispatch } from "react-redux";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OAuth from "../components/OAuth"; // Import the OAuth component
@@ -43,7 +43,6 @@ const SignIn = () => {
     password: false,
   });
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useDispatch();
 
   // Fonction pour calculer la force du mot de passe (identique à SignUp)
@@ -131,35 +130,62 @@ const SignIn = () => {
       dispatch(signInStart());
       const apiUrl =
         import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-      const res = await fetch(`${apiUrl}/auth/signin`, {
+
+      // Fonction pour rediriger selon le rôle
+      const redirectBasedOnRole = (userData: any) => {
+        if (userData.role === "admin") {
+          navigate("/dashboard");
+          toast.success("Bienvenue dans l'interface d'administration !", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        } else {
+          navigate("/profile");
+          toast.success("Connexion réussie !", {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        }
+      };
+
+      // Une seule requête API - Le serveur détermine le rôle
+      const response = await fetch(`${apiUrl}/auth/signin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Important pour les cookies
+        credentials: "include",
         body: JSON.stringify(formData),
       });
-      const data = await res.json();
+
+      const data = await response.json();
       console.log("[SignIn] API response:", data);
 
-      if (res.ok) {
-        dispatch(signInSuccess(data.data?.user || data.user));
-        toast.success("Connexion réussie !", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        // Redirection vers la page d'origine ou le dashboard après connexion réussie
-        setTimeout(() => {
-          const from = location.state?.from?.pathname || "/dashboard";
-          navigate(from);
-        }, 1500);
+      if (response.ok) {
+        const user = data.user || data.data?.user;
+
+        // Si c'est un admin, stocker aussi en localStorage pour compatibilité
+        if (user.role === "admin" && data.token) {
+          localStorage.setItem("auth_token", data.token);
+          localStorage.setItem("user", JSON.stringify(user));
+        }
+
+        // Mettre à jour Redux
+        dispatch(signInSuccess(user));
+
+        // Redirection selon le rôle
+        setTimeout(() => redirectBasedOnRole(user), 1500);
       } else {
         dispatch(signInFailure(data.message || "Erreur de connexion"));
-        toast.error(data.message || "Erreur de connexion", {
+        toast.error(data.message || "Identifiants incorrects", {
           position: "top-right",
           autoClose: 3000,
           hideProgressBar: false,
@@ -645,7 +671,7 @@ const SignIn = () => {
 
               {/* Lien d'inscription */}
               <motion.div
-                className="text-center"
+                className="text-center space-y-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.9 }}
@@ -656,6 +682,14 @@ const SignIn = () => {
                     Créez-en un
                   </Link>
                 </p>
+
+                <div className="alert alert-info">
+                  <FiUser className="w-4 h-4" />
+                  <span className="text-xs">
+                    Administrateurs et utilisateurs utilisent la même page de
+                    connexion
+                  </span>
+                </div>
               </motion.div>
             </motion.form>
           </div>

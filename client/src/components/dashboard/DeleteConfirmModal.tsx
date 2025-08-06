@@ -12,6 +12,8 @@ export const DeleteConfirmModal = ({
   onClose,
   onConfirm,
 }: DeleteConfirmModalProps) => {
+  console.log("[DeleteConfirmModal] isOpen:", isOpen);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -19,13 +21,16 @@ export const DeleteConfirmModal = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[1000]"
+          onClick={onClose}
         >
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
-            className="modal-box max-w-md bg-base-100"
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="modal-box max-w-md bg-base-100 shadow-2xl border border-base-300 relative"
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center">
               <div className="mx-auto w-12 h-12 rounded-full bg-error/20 flex items-center justify-center mb-4">
@@ -38,8 +43,8 @@ export const DeleteConfirmModal = ({
               </p>
             </div>
 
-            <div className="modal-action">
-              <button onClick={onClose} className="btn btn-ghost">
+            <div className="modal-action flex justify-end mt-6">
+              <button onClick={onClose} className="btn btn-ghost mr-2">
                 Annuler
               </button>
               <button onClick={onConfirm} className="btn btn-error">

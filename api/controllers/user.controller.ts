@@ -51,12 +51,66 @@ export const updateUserProfile: ControllerFunction = async (
       return next(createError(401, "Utilisateur non authentifié"));
     }
 
-    const { firstName, lastName, avatar } = req.body;
+    const { username, email, profilePicture, firstName, lastName, avatar } =
+      req.body;
     const updateData: any = {};
 
-    if (firstName !== undefined) updateData.firstName = firstName;
-    if (lastName !== undefined) updateData.lastName = lastName;
+    // Support des nouveaux champs (frontend)
+    if (username !== undefined) updateData.username = username.trim();
+    if (email !== undefined) updateData.email = email.trim().toLowerCase();
+    if (profilePicture !== undefined) updateData.avatar = profilePicture;
+
+    // Support des anciens champs (rétrocompatibilité)
+    if (firstName !== undefined) updateData.firstName = firstName.trim();
+    if (lastName !== undefined) updateData.lastName = lastName.trim();
     if (avatar !== undefined) updateData.avatar = avatar;
+
+    // Validation basique
+    if (updateData.username && updateData.username.length < 3) {
+      return next(
+        createError(
+          400,
+          "Le nom d'utilisateur doit contenir au moins 3 caractères"
+        )
+      );
+    }
+
+    if (
+      updateData.email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updateData.email)
+    ) {
+      return next(createError(400, "Format d'email invalide"));
+    }
+
+    // Vérifier l'unicité du username et email si modifiés
+    if (updateData.username || updateData.email) {
+      const existingUser = await User.findOne({
+        $and: [
+          { _id: { $ne: req.user.id } },
+          {
+            $or: [
+              ...(updateData.username
+                ? [{ username: updateData.username }]
+                : []),
+              ...(updateData.email ? [{ email: updateData.email }] : []),
+            ],
+          },
+        ],
+      });
+
+      if (existingUser) {
+        if (existingUser.username === updateData.username) {
+          return next(
+            createError(400, "Ce nom d'utilisateur est déjà utilisé")
+          );
+        }
+        if (existingUser.email === updateData.email) {
+          return next(
+            createError(400, "Cette adresse email est déjà utilisée")
+          );
+        }
+      }
+    }
 
     const user = await User.findByIdAndUpdate(req.user.id, updateData, {
       new: true,
@@ -67,10 +121,30 @@ export const updateUserProfile: ControllerFunction = async (
       return next(createError(404, "Utilisateur non trouvé"));
     }
 
+    // Log pour debug
+    console.log("[updateUserProfile] User updated:", {
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      avatar: user.avatar,
+    });
+
     res.status(200).json({
       success: true,
       message: "Profil mis à jour avec succès",
-      data: { user },
+      data: {
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          photo: user.avatar,
+          role: user.role,
+        },
+      },
     });
   } catch (error) {
     next(error);

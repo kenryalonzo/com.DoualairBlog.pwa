@@ -135,3 +135,145 @@ export interface RateLimitConfig {
   max: number;
   message: string;
 }
+
+// ===== BLOG SYSTEM TYPES =====
+
+// Types pour les articles
+export interface IArticle extends Document {
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  featuredImage?: string;
+  featuredVideo?: string;
+  videoType?: "upload" | "youtube" | "vimeo" | "url";
+  videoThumbnail?: string;
+  videoDuration?: number;
+  status: "draft" | "published" | "archived";
+  publishedAt?: Date;
+  authorId: string;
+  categoryId?: string;
+  tags: string[];
+  viewCount: number;
+  likesCount: number;
+  commentsCount: number;
+  isFeatured: boolean;
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Types pour les catégories
+export interface ICategory extends Document {
+  name: string;
+  slug: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+  parentId?: string;
+  isActive: boolean;
+  articlesCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Types pour les tags
+export interface ITag extends Document {
+  name: string;
+  slug: string;
+  description?: string;
+  color?: string;
+  articlesCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Types pour les médias
+export interface IMedia extends Document {
+  filename: string;
+  originalName: string;
+  mimetype: string;
+  size: number;
+  path: string;
+  url: string;
+  type: "image" | "video" | "document";
+  alt?: string;
+  caption?: string;
+  userId: string;
+  articleId?: string;
+  isPublic: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Types pour les commentaires
+export interface IComment extends Document {
+  content: string;
+  articleId: string;
+  userId: string;
+  parentId?: string;
+  isApproved: boolean;
+  isEdited: boolean;
+  editedAt?: Date;
+  likesCount: number;
+  repliesCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Types pour les interactions utilisateur
+export interface IUserInteraction extends Document {
+  userId: string;
+  articleId: string;
+  type: "like" | "favorite" | "share" | "view";
+  metadata?: Record<string, any>;
+  createdAt: Date;
+}
+
+// Types pour les requêtes d'articles
+export interface ArticleFilters {
+  status?: "draft" | "published" | "archived";
+  categoryId?: string;
+  tags?: string[];
+  authorId?: string;
+  isFeatured?: boolean;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+// Types pour les requêtes publiques
+export interface PublicArticleQuery extends PaginationQuery {
+  category?: string;
+  tag?: string;
+  search?: string;
+  featured?: boolean;
+}
+
+// Types pour les réponses d'articles
+export interface ArticleResponse {
+  article: IArticle;
+  author: {
+    id: string;
+    username: string;
+    avatar?: string;
+  };
+  category?: ICategory;
+  tags: ITag[];
+  isLiked?: boolean;
+  isFavorited?: boolean;
+}
+
+// Types pour les statistiques
+export interface BlogStats {
+  totalArticles: number;
+  publishedArticles: number;
+  draftArticles: number;
+  totalViews: number;
+  totalLikes: number;
+  totalComments: number;
+  categoriesCount: number;
+  tagsCount: number;
+}

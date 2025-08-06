@@ -9,9 +9,8 @@ import {
   FiUser,
   FiX,
 } from "react-icons/fi";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import OAuth from "../components/OAuth";
+import { useToastContext } from "../contexts/ToastContext";
 
 interface FormData {
   username: string;
@@ -34,6 +33,7 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(0);
+  const { toast } = useToastContext();
   const [isValid, setIsValid] = useState<ValidationState>({
     username: false,
     email: false,
@@ -276,7 +276,7 @@ const SignUp = () => {
     });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200 flex items-center justify-center p-4 overflow-x-hidden">
       {/* Arrière-plan animé */}
       <div
         ref={particlesRef}
@@ -286,7 +286,7 @@ const SignUp = () => {
 
       {/* Conteneur principal avec effet glassmorphism */}
       <motion.div
-        className="card w-full max-w-5xl bg-base-100/95 backdrop-blur-xl shadow-2xl border border-base-300/50 z-10 overflow-hidden"
+        className="card w-full max-w-3xl bg-base-100/95 backdrop-blur-xl shadow-2xl border border-base-300/50 z-10 overflow-hidden"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -905,9 +905,6 @@ const SignUp = () => {
           </motion.div>
         </div>
       </motion.div>
-
-      {/* Toast Container */}
-      <ToastContainer />
 
       {/* Éléments décoratifs flottants */}
       <motion.div

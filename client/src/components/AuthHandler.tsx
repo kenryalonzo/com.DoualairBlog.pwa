@@ -2,13 +2,14 @@ import { getAuth, getRedirectResult } from "firebase/auth";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useToastContext } from "../contexts/ToastContext";
 import { app } from "../firebase";
 import { signInSuccess } from "../redux/user/userSlice";
 
 export default function AuthHandler() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { toast } = useToastContext();
 
   useEffect(() => {
     console.log("[AuthHandler] mounted");

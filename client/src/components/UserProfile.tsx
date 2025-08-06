@@ -4,10 +4,10 @@ import {
 } from "@heroicons/react/24/outline";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { signOutSuccess } from "../redux/user/userSlice";
+import { useToastContext } from "../contexts/ToastContext";
+import { useAuth } from "../hooks/useAuth";
 
 interface User {
   _id: string;
@@ -29,10 +29,11 @@ interface RootState {
 const UserProfile = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useSelector((state: RootState) => state.user);
+  const { user: authUser, logout } = useAuth();
+  const { toast } = useToastContext();
 
   // Helper to format name
   const formatName = (user: User | null) => {
@@ -43,15 +44,19 @@ const UserProfile = () => {
     return user.username || "Utilisateur";
   };
 
-  // Handle profile click - navigate to dashboard
+  // Handle profile click - navigate selon le rôle
   const handleProfileClick = () => {
-    navigate("/dashboard");
+    if (authUser?.role === "admin") {
+      navigate("/dashboard");
+    } else {
+      navigate("/profile");
+    }
     setIsDropdownOpen(false);
   };
 
-  // Handle sign out
+  // Handle sign out - Déconnexion unifiée
   const handleSignOut = () => {
-    dispatch(signOutSuccess());
+    logout(); // Nettoie JWT + Redux
     navigate("/");
     toast.success("Déconnexion réussie !");
     setIsDropdownOpen(false);
