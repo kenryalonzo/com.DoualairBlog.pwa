@@ -1,36 +1,28 @@
 import { Router } from "express";
 import {
-  changePassword,
-  checkAuth,
-  forgotPassword,
-  getProfile,
-  googleAuth,
-  refreshToken,
-  resetPassword,
   signin,
-  signout,
   signup,
+  signout,
+  google,
+  verifyToken,
+  refreshToken,
 } from "../controllers/auth.controller.js";
-import { verifyToken } from "../middleware/auth.middleware.js";
-import {
-  authLimiter,
-  signupLimiter,
-} from "../middleware/security.middleware.js";
+import { authLimiter, signupLimiter } from "../middleware/security.middleware.js";
 
 const router = Router();
 
-// Routes d'authentification
+// Routes d'authentification avec rate limiting
 router.post("/signup", signupLimiter, signup);
 router.post("/signin", authLimiter, signin);
-router.post("/signout", signout);
-router.post("/google", googleAuth);
-router.post("/refresh", refreshToken);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
-router.put("/change-password", verifyToken, changePassword);
 
-// Routes protégées
-router.get("/check", verifyToken, checkAuth);
-router.get("/profile", verifyToken, getProfile);
+// Nouvelles routes unifiées
+router.post("/login", authLimiter, signin); // Alias pour signin
+router.post("/google", authLimiter, google); // OAuth Google
+
+// Routes de déconnexion et gestion des tokens
+router.post("/signout", signout);
+router.post("/logout", signout); // Alias pour signout
+router.post("/refresh", refreshToken);
+router.get("/verify", verifyToken);
 
 export default router;

@@ -21,7 +21,11 @@ export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false,
+      serializableCheck: {
+        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+        ignoredActionsPaths: ['meta.arg', 'payload.timestamp'],
+        ignoredPaths: ['items.dates'],
+      },
     }),
 });
 
