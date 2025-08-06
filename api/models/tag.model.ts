@@ -14,8 +14,19 @@ const generateSlug = (name: string): string => {
 // Interface pour le document Tag avec méthodes
 interface ITagDocument extends ITag {
   generateSlug(): string;
-  // updateArticlesCount(): Promise<void>; // Désactivé temporairement
-  // merge(targetTagId: string): Promise<void>; // Désactivé temporairement
+  merge(targetTagId: string): Promise<void>;
+}
+
+// Interface pour les méthodes statiques
+interface ITagModel extends mongoose.Model<ITagDocument> {
+  findBySlug(slug: string): Promise<ITagDocument | null>;
+  findPopular(limit?: number): Promise<ITagDocument[]>;
+  findRecent(limit?: number): Promise<ITagDocument[]>;
+  search(query: string): Promise<ITagDocument[]>;
+  findOrCreate(names: string[]): Promise<ITagDocument[]>;
+  getTagCloud(limit?: number): Promise<Array<{ _id: string; name: string; count: number }>>;
+  cleanup(): Promise<{ deletedCount: number }>;
+  getStats(): Promise<{ total: number; used: number; unused: number }>;
 }
 
 const tagSchema = new Schema<ITagDocument>(
@@ -125,6 +136,20 @@ tagSchema.pre("save", async function (next) {
 // Méthodes d'instance
 tagSchema.methods.generateSlug = function (): string {
   return generateSlug(this.name);
+};
+
+// Méthode pour fusionner des tags
+tagSchema.methods.merge = async function (targetTagId: string): Promise<void> {
+  const Article = mongoose.model("Article");
+  
+  // Mettre à jour tous les articles qui utilisent ce tag
+  await Article.updateMany(
+    { tags: this._id },
+    { $set: { "tags.$": targetTagId } }
+  );
+  
+  // Supprimer ce tag
+  await this.deleteOne();
 };
 
 // tagSchema.methods.updateArticlesCount = async function (): Promise<void> {
@@ -268,7 +293,7 @@ tagSchema.statics.getStats = async function () {
   };
 };
 
-const Tag = mongoose.model<ITagDocument>("Tag", tagSchema);
+const Tag = mongoose.model<ITagDocument, ITagModel>("Tag", tagSchema);
 
 export default Tag;
 export type { ITagDocument };

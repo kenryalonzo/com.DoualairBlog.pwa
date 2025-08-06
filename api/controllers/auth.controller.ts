@@ -105,13 +105,13 @@ export const signin: ControllerFunction = async (
       setAuthCookies(res, adminTokens.accessToken, adminTokens.refreshToken);
 
       // Retourner la réponse admin
-      return res.status(200).json({
+      res.status(200).json({
         success: true,
         message: "Connexion administrateur réussie",
         user: {
           id: "admin",
           username: "Administrator",
-          email: adminEmail,
+          email: adminEmail!,
           firstName: "Admin",
           lastName: "User",
           role: "admin",
@@ -119,6 +119,7 @@ export const signin: ControllerFunction = async (
         },
         token: adminTokens.accessToken,
       });
+      return;
     }
 
     // Sinon, vérifier si l'utilisateur existe en base
@@ -462,19 +463,20 @@ export const google: ControllerFunction = async (
       // Définir les cookies pour l'admin
       setAuthCookies(res, adminTokens.accessToken, adminTokens.refreshToken);
 
-      return res.status(200).json({
+      res.status(200).json({
         success: true,
         message: "Connexion administrateur Google réussie",
         user: {
           id: "admin_google",
           username: "Administrator",
-          email: adminEmail,
+          email: adminEmail!,
           firstName: "Admin",
           lastName: "User",
           role: "admin",
           profilePicture: picture,
         },
       });
+      return;
     }
 
     // Vérifier si l'utilisateur existe déjà

@@ -5,8 +5,8 @@ import {
   Edit,
   Trash2,
   Search,
-  Filter,
-  Palette,
+  // Filter, // Unused import
+  // Palette, // Unused import
   Eye,
   EyeOff,
   Save,
@@ -288,7 +288,7 @@ const CategoryManagement: React.FC = () => {
                   {category.isActive ? 'Active' : 'Inactive'}
                 </span>
                 <span className="text-xs text-base-content/40">
-                  {category.articleCount || 0} articles
+                  {category.articlesCount || 0} articles
                 </span>
               </div>
             </div>

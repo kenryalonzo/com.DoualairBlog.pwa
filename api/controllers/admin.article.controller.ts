@@ -44,7 +44,7 @@ export const createArticle: ControllerFunction = async (
     let tagIds: string[] = [];
     if (tags && Array.isArray(tags)) {
       const tagObjects = await Tag.findOrCreate(tags);
-      tagIds = tagObjects.map((tag) => tag._id.toString());
+      tagIds = tagObjects.map((tag) => (tag._id as any).toString());
     }
 
     // Créer l'article
@@ -338,7 +338,7 @@ export const togglePublishArticle: ControllerFunction = async (
 
 // Obtenir les statistiques des articles
 export const getArticleStats: ControllerFunction = async (
-  req: AuthRequest,
+  _req: AuthRequest,
   res: Response
 ) => {
   try {

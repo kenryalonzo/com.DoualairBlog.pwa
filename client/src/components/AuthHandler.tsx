@@ -53,25 +53,11 @@ export default function AuthHandler() {
             console.log("[AuthHandler] User username:", userData.username);
             dispatch(signInSuccess(userData));
             console.log("[AuthHandler] User signed in:", data);
-            toast.success("Connexion Google réussie !", {
-              position: "top-right",
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-            });
+            toast.success("Connexion Google réussie !");
             navigate("/");
           } else {
             console.error("[AuthHandler] Backend error:", data);
-            toast.error(data.message || "Erreur lors de la connexion Google", {
-              position: "top-right",
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-            });
+            toast.error(data.message || "Erreur lors de la connexion Google");
           }
         } else {
           console.log(
@@ -80,14 +66,7 @@ export default function AuthHandler() {
         }
       } catch (error) {
         console.error("[AuthHandler] Error handling redirect result:", error);
-        toast.error("Erreur lors de la connexion Google", {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
+        toast.error("Erreur lors de la connexion Google");
       }
     };
 

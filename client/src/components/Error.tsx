@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { FaExclamationTriangle, FaHome, FaRefresh } from "react-icons/fa";
+import { FaExclamationTriangle, FaHome } from "react-icons/fa";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 
 interface ErrorProps {
@@ -56,7 +57,7 @@ const Error = ({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <FaRefresh className="mr-2" />
+                                    <ArrowPathIcon className="w-4 h-4 mr-2" />
                 Réessayer
               </motion.button>
             )}
